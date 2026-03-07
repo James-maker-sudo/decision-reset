@@ -3,13 +3,2159 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Decision Reset</title>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <title>Decision Reset — AI Mental Clarity</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body>
   <div id="root"></div>
-  <script type="text/babel" src="/DecisionReset.jsx"></script>
+  <script type="text/babel">
+
+const _font = document.createElement("link");
+_font.href = "https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap";
+_font.rel = "stylesheet";
+document.head.appendChild(_font);
+
+const T = {
+  bg: "#0C0C14", surface: "#13131F", card: "#1A1A2E", border: "rgba(255,255,255,0.07)",
+  borderHover: "rgba(255,255,255,0.15)", text: "#F0F0FF", muted: "rgba(240,240,255,0.45)",
+  faint: "rgba(240,240,255,0.12)", pink: "#FF4D8D", purple: "#9B5DE5", cyan: "#00D9FF",
+  green: "#00E5A0", gold: "#FFD166", coral: "#FF6B6B",
+  grad1: "linear-gradient(135deg,#FF4D8D,#9B5DE5)", grad2: "linear-gradient(135deg,#00D9FF,#9B5DE5)",
+  grad3: "linear-gradient(135deg,#00E5A0,#00D9FF)", grad4: "linear-gradient(135deg,#FFD166,#FF6B6B)",
+};
+
+const CSS = () => (
+  <style>{`
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{background:${T.bg};font-family:'DM Sans',sans-serif;color:${T.text};overflow-x:hidden}
+    ::-webkit-scrollbar{width:3px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:rgba(155,93,229,0.4);border-radius:2px}
+    input,textarea,select{font-family:'DM Sans',sans-serif;outline:none}
+    button{font-family:'DM Sans',sans-serif;cursor:pointer}
+    @keyframes up{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes pop{from{opacity:0;transform:scale(0.85)}to{opacity:1;transform:scale(1)}}
+    @keyframes ping{0%{transform:scale(1);opacity:0.8}80%,100%{transform:scale(2.2);opacity:0}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+    @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+    @keyframes check{0%{transform:scale(0) rotate(-30deg)}60%{transform:scale(1.2) rotate(5deg)}100%{transform:scale(1) rotate(0)}}
+    @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+    .up{animation:up 0.4s cubic-bezier(.22,.68,0,1.2) both}
+    .pop{animation:pop 0.35s cubic-bezier(.22,.68,0,1.2) both}
+    .float{animation:float 3s ease-in-out infinite}
+    .spin{animation:spin 0.8s linear infinite}
+    .hover-lift{transition:transform 0.18s,box-shadow 0.18s}
+    .hover-lift:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.35)}
+    input[type=range]{-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;background:rgba(255,255,255,0.12);outline:none}
+    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:${T.grad1};cursor:pointer;box-shadow:0 0 0 3px rgba(255,77,141,0.2)}
+    .toggle-track{transition:background 0.25s}
+    .toggle-thumb{transition:transform 0.25s}
+  `}</style>
+);
+
+// ── Freemium State ────────────────────────────────────────────────────────────
+const PLANS = { GUEST: "guest", FREE: "free", PRO: "pro" };
+
+const initUser = {
+  plan: PLANS.GUEST,
+  name: "",
+  username: "",
+  email: "",
+  phone: "",
+  notifications: { email: false, sms: false, dailyReminder: false, weeklyInsight: false },
+  resetsUsed: 0,
+  resetsLimit: 1,
+  signupDate: null,
+  lastResetMonth: null,
+  patternData: [],
+};
+
+// ── App State ─────────────────────────────────────────────────────────────────
+const init = {
+  name: "", mood: null, overwhelm: 5, moodLog: [], problems: [], streak: 0,
+  lastDate: null, tasksTotal: 0, tasksDone: 0, load: 100, started: false,
+};
+
+function reduce(s, a) {
+  switch (a.type) {
+    case "START": {
+      const today = new Date().toDateString();
+      let streak = s.streak;
+      if (s.lastDate) {
+        const d = Math.floor((new Date() - new Date(s.lastDate)) / 86400000);
+        streak = d === 1 ? streak + 1 : d > 1 ? 1 : streak;
+      } else { streak = 1; }
+      return { ...s, name: a.name, started: true, lastDate: today, streak };
+    }
+    case "MOOD":     return { ...s, mood: a.v };
+    case "OVERWHELM":return { ...s, overwhelm: a.v };
+    case "LOG_MOOD": return { ...s, moodLog: [...s.moodLog.slice(-29), { mood: s.mood, overwhelm: s.overwhelm, date: new Date().toLocaleDateString() }] };
+    case "SET_PROBS":return { ...s, problems: a.v, tasksTotal: s.tasksTotal + a.v.length };
+    case "ACTIVATE": return { ...s, problems: s.problems.map(p => ({ ...p, active: p.id === a.id })) };
+    case "SET_STEPS":return { ...s, problems: s.problems.map(p => p.id === a.id ? { ...p, steps: a.steps } : p) };
+    case "TOGGLE_STEP": {
+      let delta = 0;
+      const probs = s.problems.map(p => {
+        if (!p.active) return p;
+        const steps = p.steps.map(st => {
+          if (st.id !== a.id) return st;
+          delta += st.done ? -1 : 1;
+          return { ...st, done: !st.done };
+        });
+        return { ...p, steps };
+      });
+      const total = Math.max(1, s.problems.reduce((x, p) => x + p.steps.length, 0));
+      return { ...s, problems: probs, tasksDone: Math.max(0, s.tasksDone + delta), load: Math.max(0, Math.round((s.load - delta * (80 / total)) * 10) / 10) };
+    }
+    case "COMPLETE": return { ...s, problems: s.problems.map(p => p.id === a.id ? { ...p, done: true, active: false } : p), load: Math.max(0, s.load - 15) };
+    case "RESET":    return { ...init };
+    default: return s;
+  }
+}
+
+// ── AI helper ─────────────────────────────────────────────────────────────────
+// ── Config — replace with your real values ────────────────────────────────────
+const CONFIG = {
+  SUPABASE_URL:      "YOUR_SUPABASE_URL",           // e.g. https://xxxx.supabase.co
+  SUPABASE_ANON_KEY: "YOUR_SUPABASE_ANON_KEY",      // public anon key from Supabase
+  API_URL:           "/api/claude",                  // Vercel serverless proxy
+  CHECKOUT_URL:      "/api/create-checkout",         // Vercel checkout endpoint
+};
+
+// ── Supabase client (lazy-loaded, no npm needed — uses CDN) ───────────────────
+let _supabase = null;
+function getSupabase() {
+  if (_supabase) return _supabase;
+  if (typeof window !== "undefined" && window.supabase) {
+    _supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    return _supabase;
+  }
+  return null;
+}
+
+// Load Supabase SDK from CDN
+(function loadSupabaseSDK() {
+  if (document.getElementById("supabase-sdk")) return;
+  const s = document.createElement("script");
+  s.id = "supabase-sdk";
+  s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js";
+  s.onload = () => { _supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY); };
+  document.head.appendChild(s);
+})();
+
+// ── AI helper — calls Vercel proxy (key stays server-side) ────────────────────
+async function ai(prompt, max = 600, plan = "free") {
+  try {
+    const r = await fetch(CONFIG.API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: max,
+        plan,
+      }),
+    });
+    if (!r.ok) throw new Error(`API ${r.status}`);
+    const d = await r.json();
+    return d.content?.[0]?.text || "";
+  } catch {
+    // Fallback: direct call for development / when proxy not set up yet
+    try {
+      const r2 = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: max, messages: [{ role: "user", content: prompt }] }),
+      });
+      const d2 = await r2.json();
+      return d2.content?.[0]?.text || "";
+    } catch { return ""; }
+  }
+}
+
+// ── Supabase auth & data helpers ──────────────────────────────────────────────
+const DB = {
+  // Auth
+  async signUp(email, password, username) {
+    const sb = getSupabase(); if (!sb) throw new Error("Supabase not ready");
+    const { data, error } = await sb.auth.signUp({
+      email, password,
+      options: { data: { username } }
+    });
+    if (error) throw error;
+    return data.user;
+  },
+  async signIn(email, password) {
+    const sb = getSupabase(); if (!sb) throw new Error("Supabase not ready");
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    return data.user;
+  },
+  async signOut() {
+    const sb = getSupabase(); if (!sb) return;
+    await sb.auth.signOut();
+  },
+  async getSession() {
+    const sb = getSupabase(); if (!sb) return null;
+    const { data } = await sb.auth.getSession();
+    return data?.session?.user || null;
+  },
+  // Profile
+  async getProfile(userId) {
+    const sb = getSupabase(); if (!sb) return null;
+    const { data } = await sb.from("profiles").select("*").eq("id", userId).single();
+    return data;
+  },
+  async updateProfile(userId, updates) {
+    const sb = getSupabase(); if (!sb) return;
+    await sb.from("profiles").update(updates).eq("id", userId);
+  },
+  // Mood log
+  async logMood(userId, mood, overwhelm) {
+    const sb = getSupabase(); if (!sb) return;
+    await sb.from("mood_logs").insert({ user_id: userId, mood_label: mood.l, mood_emoji: mood.e, mood_score: mood.s, overwhelm });
+  },
+  // Journal
+  async saveJournal(userId, prompt, content) {
+    const sb = getSupabase(); if (!sb) return;
+    await sb.from("journal_entries").insert({ user_id: userId, prompt, content });
+  },
+  async getJournals(userId, limit = 10) {
+    const sb = getSupabase(); if (!sb) return [];
+    const { data } = await sb.from("journal_entries").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(limit);
+    return data || [];
+  },
+  // Reset sessions
+  async saveSession(userId, problems) {
+    const sb = getSupabase(); if (!sb) return;
+    const done = problems.every(p => p.done);
+    await sb.from("reset_sessions").insert({ user_id: userId, problems, completed: done, completed_at: done ? new Date().toISOString() : null });
+  },
+  // Stripe checkout
+  async startCheckout(userId, userEmail, plan) {
+    const r = await fetch(CONFIG.CHECKOUT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, userEmail, plan }),
+    });
+    const { url, error } = await r.json();
+    if (error) throw new Error(error);
+    window.location.href = url; // Redirect to Stripe Checkout
+  },
+};
+
+// ── Primitives ────────────────────────────────────────────────────────────────
+const Pill = ({ label, active, onClick, color = T.pink }) => (
+  <button onClick={onClick} style={{ border: `1px solid ${active ? color : T.border}`, borderRadius: 99, padding: "6px 16px", background: active ? `${color}18` : "transparent", color: active ? color : T.muted, fontSize: 12, fontWeight: 600, transition: "all 0.15s", letterSpacing: 0.3 }}>{label}</button>
+);
+
+const Btn = ({ children, onClick, grad = T.grad1, disabled, outline, small, style = {} }) => (
+  <button onClick={onClick} disabled={disabled} style={{
+    background: outline ? "transparent" : (disabled ? "rgba(255,255,255,0.07)" : grad),
+    border: outline ? `1px solid ${T.border}` : "none", borderRadius: 14,
+    padding: small ? "10px 20px" : "14px 24px", color: disabled ? T.muted : "#fff",
+    fontWeight: 700, fontSize: small ? 13 : 15, width: "100%",
+    boxShadow: (!disabled && !outline) ? "0 4px 20px rgba(0,0,0,0.3)" : "none",
+    transition: "all 0.18s", opacity: disabled ? 0.5 : 1,
+    cursor: disabled ? "not-allowed" : "pointer", ...style,
+  }}>{children}</button>
+);
+
+const Card = ({ children, style = {}, glow, onClick }) => (
+  <div onClick={onClick} style={{ background: T.card, border: `1px solid ${glow ? glow + "40" : T.border}`, borderRadius: 20, padding: 18, boxShadow: glow ? `0 0 28px ${glow}18` : "none", transition: "border 0.2s", cursor: onClick ? "pointer" : "default", ...style }}>{children}</div>
+);
+
+const Tag = ({ label, color }) => (
+  <span style={{ background: `${color}18`, color, fontSize: 10, fontWeight: 700, borderRadius: 6, padding: "3px 9px", letterSpacing: 0.5, textTransform: "uppercase" }}>{label}</span>
+);
+
+const Spinner = () => <div className="spin" style={{ width: 20, height: 20, border: "2px solid rgba(255,255,255,0.15)", borderTopColor: T.pink, borderRadius: "50%", display: "inline-block" }} />;
+
+const Back = ({ onClick }) => (
+  <button onClick={onClick} style={{ background: T.faint, border: `1px solid ${T.border}`, borderRadius: 12, padding: "8px 14px", color: T.text, fontSize: 15, transition: "background 0.15s" }}>←</button>
+);
+
+// ── Toggle Switch ─────────────────────────────────────────────────────────────
+const Toggle = ({ on, onChange, color = T.pink }) => (
+  <div onClick={() => onChange(!on)} className="toggle-track" style={{
+    width: 46, height: 26, borderRadius: 13, background: on ? color : "rgba(255,255,255,0.12)",
+    position: "relative", cursor: "pointer", flexShrink: 0,
+  }}>
+    <div className="toggle-thumb" style={{
+      width: 20, height: 20, borderRadius: "50%", background: "#fff",
+      position: "absolute", top: 3, left: 3,
+      transform: on ? "translateX(20px)" : "translateX(0)",
+      boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
+    }} />
+  </div>
+);
+
+// ── Usage Bar ─────────────────────────────────────────────────────────────────
+const UsageBar = ({ used, limit, color = T.pink }) => {
+  const pct = Math.min(100, Math.round(used / limit * 100));
+  return (
+    <div>
+      <div style={{ height: 4, background: T.faint, borderRadius: 2 }}>
+        <div style={{ height: "100%", borderRadius: 2, background: pct >= 100 ? T.coral : color, width: `${pct}%`, transition: "width 0.5s ease" }} />
+      </div>
+    </div>
+  );
+};
+
+// ── Paywall / Upgrade Screen ──────────────────────────────────────────────────
+// ── Upgrade Modal — shows when user taps any upgrade button ──────────────────
+const UpgradeModal = ({ onClose, onSelect, loading }) => (
+  <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(12px)", zIndex: 1000, display: "flex", alignItems: "flex-end", justifyContent: "center", padding: "0 0 0 0", animation: "up 0.3s cubic-bezier(.22,.68,0,1.2)" }}>
+    <div style={{ background: T.surface, borderRadius: "28px 28px 0 0", width: "100%", maxWidth: 480, padding: "32px 28px 48px", border: `1px solid ${T.border}` }}>
+      {/* Handle bar */}
+      <div style={{ width: 40, height: 4, background: T.faint, borderRadius: 2, margin: "0 auto 28px" }} />
+
+      <div style={{ textAlign: "center", marginBottom: 28 }}>
+        <div className="float" style={{ fontSize: 52, marginBottom: 12 }}>⚡</div>
+        <h2 style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 24, marginBottom: 8, background: T.grad1, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Upgrade to Pro</h2>
+        <p style={{ color: T.muted, fontSize: 14, lineHeight: 1.6 }}>Unlock unlimited resets, deeper AI insights, and full access to every feature.</p>
+      </div>
+
+      {/* Feature list */}
+      <div style={{ background: `${T.purple}08`, border: `1px solid ${T.purple}18`, borderRadius: 16, padding: "14px 16px", marginBottom: 24 }}>
+        {[
+          ["♾️", "Unlimited resets every month"],
+          ["🧠", "Deeper AI-tailored action steps"],
+          ["📊", "Long-term pattern analysis"],
+          ["📓", "Unlimited journal prompts"],
+          ["🔮", "Full mental health hub access"],
+          ["💾", "Complete history saved forever"],
+        ].map(([icon, text], i) => (
+          <div key={i} style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: i < 5 ? 10 : 0 }}>
+            <span style={{ fontSize: 16 }}>{icon}</span>
+            <span style={{ color: T.text, fontSize: 13, fontWeight: 500 }}>{text}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Pricing buttons */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <button
+          disabled={loading}
+          onClick={() => onSelect("monthly")}
+          style={{ width: "100%", background: T.grad1, border: "none", borderRadius: 16, padding: "16px", color: "#fff", fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 16, cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span>{loading ? "Redirecting…" : "Monthly"}</span>
+          <span style={{ fontFamily: "'DM Sans',sans-serif", fontWeight: 700, fontSize: 15 }}>$9.99 / mo</span>
+        </button>
+
+        <button
+          disabled={loading}
+          onClick={() => onSelect("annual")}
+          style={{ width: "100%", background: `linear-gradient(135deg,${T.gold},${T.coral})`, border: "none", borderRadius: 16, padding: "16px", color: "#fff", fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 16, cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative" }}>
+          <div style={{ textAlign: "left" }}>
+            <span>Annual</span>
+            <span style={{ display: "block", fontFamily: "'DM Sans',sans-serif", fontWeight: 500, fontSize: 11, opacity: 0.85 }}>Save 51% — best value</span>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <span style={{ fontFamily: "'DM Sans',sans-serif", fontWeight: 700, fontSize: 15 }}>$59 / yr</span>
+            <span style={{ display: "block", fontFamily: "'DM Sans',sans-serif", fontWeight: 400, fontSize: 11, opacity: 0.75, textDecoration: "line-through" }}>$119.88</span>
+          </div>
+        </button>
+
+        <button onClick={onClose} style={{ background: "none", border: "none", color: T.muted, fontSize: 13, cursor: "pointer", padding: "10px", textAlign: "center" }}>
+          Maybe later
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+const Paywall = ({ type, onClose, onUpgrade, onCreateAccount }) => {
+  const isGuest = type === "guest_limit";
+  const isFreeSoft = type === "free_soft";
+  const isFreeLock = type === "free_lock";
+
+  return (
+    <div style={{ position: "absolute", inset: 0, background: "rgba(12,12,20,0.97)", backdropFilter: "blur(12px)", zIndex: 200, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 28px 40px", animation: "up 0.35s ease" }}>
+      <div style={{ textAlign: "center", marginBottom: 28 }}>
+        <div style={{ fontSize: 64, marginBottom: 16 }}>{isGuest ? "✨" : isFreeSoft ? "🌟" : "🔒"}</div>
+        <h2 style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 24, marginBottom: 12, background: T.grad1, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+          {isGuest ? "You're just getting started" : isFreeSoft ? "You're on a roll!" : "Monthly limit reached"}
+        </h2>
+        <p style={{ color: T.muted, fontSize: 14, lineHeight: 1.7 }}>
+          {isGuest
+            ? "Create a free account to unlock 2 more resets and personalized insights."
+            : isFreeSoft
+            ? "You've used 2 of 3 resets this month. Upgrade for unlimited access and deeper insights."
+            : "You've used all 3 free resets this month. Upgrade to Pro to keep your momentum going."}
+        </p>
+      </div>
+
+      {/* Pro Features */}
+      <Card glow={T.purple} style={{ marginBottom: 20, background: `linear-gradient(135deg,${T.purple}12,${T.pink}08)` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+          <span style={{ fontSize: 20 }}>⚡</span>
+          <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 16, color: T.purple }}>Decision Reset Pro</span>
+          <span style={{ marginLeft: "auto", fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 18, color: T.gold }}>$7.99/mo</span>
+        </div>
+        {["Unlimited decision resets", "Advanced AI step breakdown", "Long-term pattern analysis", "Full routine customization", "Unlimited journal prompts", "Meditation personalization", "Full history access"].map((f, i) => (
+          <div key={i} style={{ display: "flex", gap: 10, alignItems: "center", padding: "5px 0", borderTop: i > 0 ? `1px solid ${T.faint}` : "none" }}>
+            <span style={{ color: T.green, fontSize: 13 }}>✓</span>
+            <span style={{ fontSize: 13, color: T.text }}>{f}</span>
+          </div>
+        ))}
+      </Card>
+
+      <Btn onClick={onUpgrade} style={{ marginBottom: 10 }}>✨ Upgrade to Pro — $9.99/mo</Btn>
+      <Btn grad={T.grad3} onClick={onUpgrade} style={{ marginBottom: 10, fontSize: 13 }}>Try Annual — $59/yr (save 51%)</Btn>
+
+      {isGuest && (
+        <Btn outline onClick={onCreateAccount} style={{ marginBottom: 10, fontSize: 13 }}>
+          Create Free Account (3 resets/mo)
+        </Btn>
+      )}
+
+      {onClose && !isFreeLock && (
+        <button onClick={onClose} style={{ background: "none", border: "none", color: T.muted, fontSize: 13, cursor: "pointer", padding: "8px" }}>
+          {isFreeSoft ? "Continue with free plan" : "Maybe later"}
+        </button>
+      )}
+    </div>
+  );
+};
+
+// ── Load Bar ──────────────────────────────────────────────────────────────────
+const LoadBar = ({ load }) => {
+  const pct = Math.round(load);
+  const col = pct > 60 ? T.green : pct > 30 ? T.gold : T.coral;
+  return (
+    <div style={{ padding: "8px 24px 0" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+        <span style={{ color: T.muted, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Mental Load</span>
+        <span style={{ color: col, fontSize: 10, fontWeight: 700 }}>{pct}% capacity</span>
+      </div>
+      <div style={{ height: 3, background: T.faint, borderRadius: 2 }}>
+        <div style={{ height: "100%", borderRadius: 2, background: col, width: `${pct}%`, transition: "width 0.8s ease, background 0.4s" }} />
+      </div>
+    </div>
+  );
+};
+
+const Shell = ({ children, style = {} }) => (
+  <div style={{
+    width: 393, minHeight: 852, maxHeight: 852, background: T.surface, borderRadius: 48,
+    overflow: "hidden", position: "relative", display: "flex", flexDirection: "column",
+    boxShadow: "0 40px 100px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.08)",
+    ...style,
+  }}>
+    {children}
+  </div>
+);
+
+const Bar = () => (
+  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 26px 6px" }}>
+    <span style={{ color: T.text, fontFamily: "'Syne',sans-serif", fontSize: 15, fontWeight: 700 }}>9:41</span>
+    <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+      {["▪▪▪", "WiFi", "🔋"].map((x, i) => <span key={i} style={{ color: T.text, fontSize: 11 }}>{x}</span>)}
+    </div>
+  </div>
+);
+
+const NAV = [
+  { id: "home", icon: "⌂", label: "Home" },
+  { id: "progress", icon: "◎", label: "Progress" },
+  { id: "hub", icon: "✦", label: "Hub" },
+  { id: "journal", icon: "◈", label: "Journal" },
+  { id: "profile", icon: "◉", label: "Profile" },
+];
+const SHOW_NAV = new Set(["home","progress","hub","journal","profile","checkin","dump","focus","action","relief"]);
+
+const Nav = ({ screen, nav }) => {
+  if (!SHOW_NAV.has(screen)) return null;
+  return (
+    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(13,13,20,0.96)", backdropFilter: "blur(20px)", borderTop: `1px solid ${T.border}`, display: "flex", justifyContent: "space-around", padding: "10px 0 22px", zIndex: 99 }}>
+      {NAV.map(n => {
+        const on = screen === n.id;
+        return (
+          <button key={n.id} onClick={() => nav(n.id)} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "4px 10px" }}>
+            <span style={{ fontSize: 18, opacity: on ? 1 : 0.3, filter: on ? `drop-shadow(0 0 6px ${T.pink})` : "none", transition: "all 0.2s" }}>{n.icon}</span>
+            <span style={{ fontSize: 9, fontWeight: 700, color: on ? T.pink : T.muted, letterSpacing: 0.5, transition: "color 0.2s" }}>{n.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SCREENS
+// ══════════════════════════════════════════════════════════════════════════════
+
+const Welcome = ({ dispatch, nav, userState, setUserState }) => {
+  const [mode, setMode]         = useState("main");
+  const [name, setName]         = useState("");
+  const [email, setEmail]       = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState("");
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("upgrade") === "success") {
+          window.history.replaceState({}, "", window.location.pathname);
+        }
+        const user = await DB.getSession();
+        if (user) {
+          const profile = await DB.getProfile(user.id);
+          if (profile) { resumeSession(user, profile); return; }
+        }
+      } catch {}
+      setChecking(false);
+    };
+    setTimeout(checkSession, 900);
+  }, []);
+
+  const resumeSession = (user, profile) => {
+    const isPro = profile.plan === "pro";
+    dispatch({ type: "START", name: profile.username || profile.email?.split("@")[0] || "Friend" });
+    setUserState({
+      plan: isPro ? PLANS.PRO : PLANS.FREE,
+      name: profile.username || "",
+      username: profile.username || "",
+      email: profile.email || user.email || "",
+      phone: profile.phone || "",
+      notifications: profile.notifications || { email: false, sms: false, dailyReminder: false, weeklyInsight: false },
+      resetsUsed: profile.resets_used || 0,
+      resetsLimit: isPro ? 999 : (profile.resets_limit || 3),
+      signupDate: profile.created_at,
+      supabaseId: user.id,
+      stripeCustomerId: profile.stripe_customer_id || null,
+    });
+    nav("home");
+  };
+
+  const handleSignUp = async () => {
+    if (!name.trim() || !email.trim() || password.length < 6) {
+      setError("Fill all fields. Password needs 6+ characters."); return;
+    }
+    setLoading(true); setError("");
+    try {
+      const user = await DB.signUp(email.trim(), password, name.trim());
+      if (user) {
+        await new Promise(r => setTimeout(r, 1000));
+        const profile = await DB.getProfile(user.id) || { plan: "free", resets_used: 0, resets_limit: 3 };
+        resumeSession(user, profile);
+      }
+    } catch (e) { setError(e.message || "Sign up failed. Try again."); }
+    setLoading(false);
+  };
+
+  const handleLogin = async () => {
+    if (!email.trim() || !password) { setError("Enter your email and password."); return; }
+    setLoading(true); setError("");
+    try {
+      const user = await DB.signIn(email.trim(), password);
+      if (user) {
+        const profile = await DB.getProfile(user.id);
+        if (profile) resumeSession(user, profile);
+      }
+    } catch (e) { setError(e.message === "Invalid login credentials" ? "Wrong email or password." : e.message || "Login failed."); }
+    setLoading(false);
+  };
+
+  const startGuest = () => {
+    dispatch({ type: "START", name: "Guest" });
+    setUserState(u => ({ ...u, plan: PLANS.GUEST, name: "Guest", username: "Guest" }));
+    nav("home");
+  };
+
+  const inp = { width: "100%", background: T.card, border: `1px solid ${T.border}`, borderRadius: 14, padding: "14px 18px", color: T.text, fontSize: 16 };
+
+  if (checking) return (
+    <Shell>
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 16 }}>
+        <div className="float" style={{ fontSize: 64 }}>🧠</div>
+        <Spinner />
+        <p style={{ color: T.muted, fontSize: 13 }}>Loading your session…</p>
+      </div>
+    </Shell>
+  );
+
+  return (
+    <Shell>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 32px 48px", gap: 20 }}>
+        <div style={{ textAlign: "center" }}>
+          <div className="float" style={{ fontSize: 72, marginBottom: 16, display: "block" }}>🧠</div>
+          <h1 style={{ fontFamily: "'Syne',sans-serif", fontSize: 34, fontWeight: 800, marginBottom: 8, background: T.grad1, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Decision Reset</h1>
+          <p style={{ color: T.muted, fontSize: 14, lineHeight: 1.65 }}>AI-powered clarity for overwhelmed minds.</p>
+        </div>
+
+        {error && (
+          <div style={{ background: `${T.coral}12`, border: `1px solid ${T.coral}30`, borderRadius: 12, padding: "10px 14px" }}>
+            <p style={{ color: T.coral, fontSize: 13 }}>⚠ {error}</p>
+          </div>
+        )}
+
+        {mode === "main" && (
+          <>
+            <Btn onClick={() => { setMode("signup"); setError(""); }}>Create Free Account →</Btn>
+            <Btn outline onClick={() => { setMode("login"); setError(""); }}>Sign In</Btn>
+            <button onClick={startGuest} style={{ background: "none", border: "none", color: T.muted, fontSize: 13, cursor: "pointer", textAlign: "center" }}>Continue as Guest (data not saved)</button>
+          </>
+        )}
+
+        {mode === "signup" && (
+          <>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <input value={name} onChange={e => setName(e.target.value)} placeholder="Your first name" style={inp} />
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" style={inp} />
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password (6+ characters)" style={inp} />
+            </div>
+            <div style={{ background: `${T.green}0A`, border: `1px solid ${T.green}25`, borderRadius: 14, padding: "12px 16px" }}>
+              <p style={{ color: T.green, fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Free plan includes:</p>
+              <p style={{ color: T.muted, fontSize: 12, lineHeight: 1.6 }}>✓ 3 resets/month  ✓ AI-tailored steps  ✓ Journal  ✓ History saved</p>
+            </div>
+            <Btn disabled={loading} onClick={handleSignUp}>{loading ? "Creating account…" : "Begin Your Reset →"}</Btn>
+            <button onClick={() => { setMode("main"); setError(""); }} style={{ background: "none", border: "none", color: T.muted, fontSize: 13, cursor: "pointer", textAlign: "center" }}>← Back</button>
+          </>
+        )}
+
+        {mode === "login" && (
+          <>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" style={inp} />
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" style={inp} />
+            </div>
+            <Btn disabled={loading} onClick={handleLogin}>{loading ? "Signing in…" : "Sign In →"}</Btn>
+            <button onClick={() => { setMode("main"); setError(""); }} style={{ background: "none", border: "none", color: T.muted, fontSize: 13, cursor: "pointer", textAlign: "center" }}>← Back</button>
+          </>
+        )}
+      </div>
+    </Shell>
+  );
+};
+
+// ── Quote Bank — 40 curated mental wellness quotes ───────────────────────────
+const QUOTE_BANK = [
+  { text: "You don't have to have it all figured out to move forward.", author: "Unknown" },
+  { text: "Rest is not a reward. It's a requirement.", author: "Unknown" },
+  { text: "Progress, not perfection.", author: "Unknown" },
+  { text: "The mind is everything. What you think, you become.", author: "Buddha" },
+  { text: "You are allowed to be both a masterpiece and a work in progress.", author: "Sophia Bush" },
+  { text: "Feelings are just visitors. Let them come and go.", author: "Mooji" },
+  { text: "Do one thing today that your future self will thank you for.", author: "Unknown" },
+  { text: "Not all storms come to disrupt your life. Some come to clear your path.", author: "Unknown" },
+  { text: "You owe yourself the same compassion you give everyone else.", author: "Unknown" },
+  { text: "Small steps are still steps.", author: "Unknown" },
+  { text: "Your only job today is to take the next right step.", author: "Unknown" },
+  { text: "Healing is not linear. Be patient with yourself.", author: "Unknown" },
+  { text: "You can't pour from an empty cup. Take care of yourself first.", author: "Unknown" },
+  { text: "The present moment is the only moment available to us.", author: "Thích Nhất Hạnh" },
+  { text: "What you resist persists. What you accept, you can change.", author: "Carl Jung" },
+  { text: "Breathe. You've survived every hard day so far.", author: "Unknown" },
+  { text: "Start where you are. Use what you have. Do what you can.", author: "Arthur Ashe" },
+  { text: "It's okay to not be okay — as long as you don't stay there.", author: "Unknown" },
+  { text: "The best time to plant a tree was 20 years ago. The second best time is now.", author: "Chinese Proverb" },
+  { text: "You are not your thoughts. You are the one who notices them.", author: "Unknown" },
+  { text: "Difficult roads often lead to beautiful destinations.", author: "Unknown" },
+  { text: "Be gentle with yourself. You are a child of the universe.", author: "Max Ehrmann" },
+  { text: "Done is better than perfect.", author: "Unknown" },
+  { text: "Every day may not be good, but there is something good in every day.", author: "Alice Morse Earle" },
+  { text: "Your feelings are valid. Your needs matter. Your voice deserves to be heard.", author: "Unknown" },
+  { text: "The way out is through.", author: "Robert Frost" },
+  { text: "Clarity comes from engagement, not thought.", author: "Marie Forleo" },
+  { text: "You are more resilient than you realize.", author: "Unknown" },
+  { text: "Let go of what you can't control. Focus on what you can.", author: "Unknown" },
+  { text: "You are not behind. You are exactly where you need to be.", author: "Unknown" },
+  { text: "Worry is a misuse of imagination.", author: "Dan Zadra" },
+  { text: "One day at a time. One hour at a time. One moment at a time.", author: "Unknown" },
+  { text: "The goal is not to be better than others. It's to be better than yesterday.", author: "Unknown" },
+  { text: "Your mental health is a priority. Your happiness is an essential.", author: "Unknown" },
+  { text: "Choose thoughts that make you feel at peace.", author: "Unknown" },
+  { text: "Almost everything will work again if you unplug it for a few minutes — including you.", author: "Anne Lamott" },
+  { text: "You don't have to earn rest.", author: "Unknown" },
+  { text: "Comparison is the thief of joy.", author: "Theodore Roosevelt" },
+  { text: "The strongest people are not those who show strength in front of us, but those who win battles we know nothing about.", author: "Unknown" },
+  { text: "Even the darkest night will end and the sun will rise.", author: "Victor Hugo" },
+];
+
+// ── Daily Quote Component ──────────────────────────────────────────────────────
+const DailyQuote = ({ userName }) => {
+  const [quote, setQuote] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [flipping, setFlipping] = useState(false);
+  const [quoteKey, setQuoteKey] = useState(0);
+
+  // Pick a quote — seeded by 12-hour window so it changes twice a day
+  const getSeededQuote = () => {
+    const now = new Date();
+    // Seed = date + AM/PM window (changes every 12 hours)
+    const seed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate() + (now.getHours() >= 12 ? 1000 : 0);
+    const idx = seed % QUOTE_BANK.length;
+    return QUOTE_BANK[idx];
+  };
+
+  const fetchAIQuote = async () => {
+    try {
+      const mood = userName ? `for someone named ${userName} who is working on their mental wellness` : "for someone working on mental clarity and emotional wellbeing";
+      const raw = await ai(`Generate one original, profound quote ${mood}. It should feel fresh — not a famous quote people already know. Max 20 words. Warm, direct, and empowering.
+Return ONLY valid JSON: {"text":"the quote here","author":"Decision Reset"}`, 120);
+      const cleaned = raw.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
+      const jsonMatch = cleaned.match(/\{[\s\S]*?\}/);
+      if (!jsonMatch) return null;
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (parsed.text && parsed.text.length > 5) return parsed;
+      return null;
+    } catch { return null; }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      // Show seeded quote instantly
+      const seeded = getSeededQuote();
+      if (!cancelled) { setQuote(seeded); setLoading(false); }
+      // Then try AI upgrade in background
+      const aiQuote = await fetchAIQuote();
+      if (!cancelled && aiQuote) {
+        setFlipping(true);
+        setTimeout(() => {
+          if (!cancelled) { setQuote(aiQuote); setFlipping(false); setQuoteKey(k => k + 1); }
+        }, 300);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
+  const refreshQuote = async () => {
+    setFlipping(true);
+    const aiQuote = await fetchAIQuote();
+    setTimeout(() => {
+      const next = aiQuote || QUOTE_BANK[Math.floor(Math.random() * QUOTE_BANK.length)];
+      setQuote(next); setFlipping(false); setQuoteKey(k => k + 1);
+    }, 300);
+  };
+
+  // Rotating gradient accents per quote index
+  const accents = [T.pink, T.purple, T.cyan, T.gold, T.green, T.coral];
+  const accentColor = accents[quoteKey % accents.length];
+
+  return (
+    <div style={{ marginTop: 20, animation: "up 0.5s cubic-bezier(.22,.68,0,1.2) 0.3s both" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+        <p style={{ color: T.muted, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>✦ Daily Wisdom</p>
+        <button onClick={refreshQuote} disabled={flipping} style={{ background: "none", border: `1px solid ${T.border}`, borderRadius: 20, padding: "4px 12px", color: T.muted, fontSize: 11, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, transition: "all 0.2s", opacity: flipping ? 0.4 : 1 }}>
+          <span style={{ display: "inline-block", transform: flipping ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.3s" }}>↺</span> New
+        </button>
+      </div>
+
+      <div key={quoteKey} style={{
+        background: `linear-gradient(135deg, ${accentColor}10, ${T.purple}08)`,
+        border: `1px solid ${accentColor}30`,
+        borderRadius: 22,
+        padding: "22px 20px",
+        position: "relative",
+        overflow: "hidden",
+        opacity: flipping ? 0 : 1,
+        transform: flipping ? "translateY(8px)" : "translateY(0)",
+        transition: "opacity 0.3s, transform 0.3s",
+      }}>
+        {/* Decorative quote mark */}
+        <div style={{
+          position: "absolute", top: 10, left: 16,
+          fontSize: 64, lineHeight: 1, color: accentColor, opacity: 0.12,
+          fontFamily: "Georgia, serif", fontWeight: 900, userSelect: "none",
+        }}>"</div>
+
+        {/* Glowing dot accent */}
+        <div style={{
+          position: "absolute", top: 14, right: 14,
+          width: 8, height: 8, borderRadius: "50%",
+          background: accentColor, opacity: 0.6,
+          boxShadow: `0 0 10px ${accentColor}`,
+          animation: "ping 2s ease-in-out infinite",
+        }} />
+
+        {loading ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0" }}>
+            <Spinner />
+            <span style={{ color: T.muted, fontSize: 13 }}>Finding your quote…</span>
+          </div>
+        ) : (
+          <>
+            <p style={{
+              fontFamily: "'Syne', sans-serif",
+              fontSize: 15,
+              fontWeight: 600,
+              lineHeight: 1.65,
+              color: T.text,
+              marginBottom: 14,
+              paddingLeft: 4,
+              paddingTop: 8,
+            }}>
+              "{quote?.text}"
+            </p>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ height: 1, flex: 1, background: `${accentColor}30` }} />
+              <span style={{ color: accentColor, fontSize: 11, fontWeight: 700, letterSpacing: 0.5 }}>
+                — {quote?.author || "Unknown"}
+              </span>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ── Home ──────────────────────────────────────────────────────────────────────
+const Home = ({ state, nav, userState }) => {
+  const hr = new Date().getHours();
+  const greet = hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening";
+  const actions = [
+    { icon: "😌", label: "Check In", to: "checkin", color: T.purple },
+    { icon: "🧠", label: "Brain Dump", to: "dump", color: T.pink },
+    { icon: "🎯", label: "Focus", to: "focus", color: T.gold },
+    { icon: "🕊️", label: "Relief", to: "relief", color: T.green },
+    { icon: "✦", label: "Hub", to: "hub", color: T.cyan },
+    { icon: "◈", label: "Journal", to: "journal", color: "#FF6B6B" },
+  ];
+
+  const isPro = userState.plan === PLANS.PRO;
+  const isFree = userState.plan === PLANS.FREE;
+  const resetsLeft = userState.resetsLimit - userState.resetsUsed;
+
+  return (
+    <Shell>
+      <Bar />
+      <LoadBar load={state.load} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px 100px" }}>
+        <div className="up" style={{ marginBottom: 24 }}>
+          <p style={{ color: T.muted, fontSize: 13 }}>{greet}{state.name ? `, ${state.name}` : ""}</p>
+          <h2 style={{ fontFamily: "'Syne',sans-serif", fontSize: 26, fontWeight: 800, lineHeight: 1.2 }}>How are you feeling<br />today? ✨</h2>
+        </div>
+
+        {/* Usage indicator for free users */}
+        {isFree && !isPro && (
+          <Card glow={resetsLeft <= 1 ? T.coral : T.purple} style={{ marginBottom: 16, background: `${resetsLeft <= 1 ? T.coral : T.purple}0A` }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <span style={{ fontSize: 13, fontWeight: 700 }}>Monthly Resets</span>
+              <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 14, color: resetsLeft <= 1 ? T.coral : T.pink }}>{userState.resetsUsed} of {userState.resetsLimit} used</span>
+            </div>
+            <UsageBar used={userState.resetsUsed} limit={userState.resetsLimit} color={T.pink} />
+            {resetsLeft === 1 && <p style={{ color: T.gold, fontSize: 11, marginTop: 8 }}>✨ 1 reset remaining — upgrade to go unlimited</p>}
+          </Card>
+        )}
+
+        {isPro && (
+          <Card glow={T.gold} style={{ marginBottom: 16, background: `${T.gold}08`, display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: 22 }}>⚡</span>
+            <div><div style={{ fontWeight: 700, fontSize: 13, color: T.gold }}>Pro Member</div><div style={{ color: T.muted, fontSize: 11 }}>Unlimited resets & AI insights</div></div>
+          </Card>
+        )}
+
+        {state.streak > 0 && (
+          <Card glow={T.gold} style={{ marginBottom: 18, display: "flex", gap: 14, alignItems: "center" }} className="up">
+            <span className="float" style={{ fontSize: 36 }}>🔥</span>
+            <div>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 20, color: T.gold }}>{state.streak}-Day Streak</div>
+              <div style={{ color: T.muted, fontSize: 12 }}>Keep showing up for yourself</div>
+            </div>
+          </Card>
+        )}
+
+        <p style={{ color: T.muted, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 14 }}>Quick Actions</p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 24 }}>
+          {actions.map((a, i) => (
+            <button key={i} onClick={() => nav(a.to)} className="hover-lift" style={{ background: `${a.color}12`, border: `1px solid ${a.color}25`, borderRadius: 18, padding: "18px 8px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, animation: `up 0.4s cubic-bezier(.22,.68,0,1.2) ${i * 0.05}s both` }}>
+              <span style={{ fontSize: 26 }}>{a.icon}</span>
+              <span style={{ color: T.text, fontSize: 11, fontWeight: 600 }}>{a.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <Card style={{ background: `linear-gradient(135deg,${T.purple}10,${T.pink}08)`, border: `1px solid ${T.purple}20` }}>
+          <div style={{ display: "flex", justifyContent: "space-around" }}>
+            {[["🎯", state.tasksDone, "Done"], ["📈", `${state.tasksTotal === 0 ? 0 : Math.round(state.tasksDone / state.tasksTotal * 100)}%`, "Rate"], ["🧠", `${Math.round(state.load)}%`, "Load"]].map(([e, v, l], i) => (
+              <div key={i} style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 22, marginBottom: 4 }}>{e}</div>
+                <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 22 }}>{v}</div>
+                <div style={{ color: T.muted, fontSize: 11 }}>{l}</div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Daily Quote — appears at the bottom of home, refreshes every 12hrs or on tap */}
+        <DailyQuote userName={state.name} />
+      </div>
+      <Nav screen="home" nav={nav} />
+    </Shell>
+  );
+};
+
+// ── Check-In ──────────────────────────────────────────────────────────────────
+const CheckIn = ({ state, dispatch, nav, userState }) => {
+  const moods = [
+    { e: "😤", l: "Stressed", s: 2 }, { e: "😔", l: "Low", s: 3 },
+    { e: "😐", l: "Okay", s: 5 }, { e: "🙂", l: "Good", s: 7 },
+    { e: "😄", l: "Great", s: 9 }, { e: "🤩", l: "Amazing", s: 10 },
+  ];
+  return (
+    <Shell>
+      <Bar />
+      <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px 40px" }}>
+        <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 24 }}>
+          <Back onClick={() => nav("home")} />
+          <h2 style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 20 }}>Daily Check-In</h2>
+        </div>
+        <p style={{ color: T.muted, fontSize: 14, marginBottom: 20 }}>How are you really feeling right now?</p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 32 }}>
+          {moods.map((m, i) => {
+            const on = state.mood?.l === m.l;
+            return (
+              <button key={i} onClick={() => dispatch({ type: "MOOD", v: m })} style={{ background: on ? `${T.pink}18` : T.card, border: `2px solid ${on ? T.pink : T.border}`, borderRadius: 18, padding: "18px 8px", transition: "all 0.18s", animation: `pop 0.35s cubic-bezier(.22,.68,0,1.2) ${i * 0.06}s both` }}>
+                <div style={{ fontSize: 30, marginBottom: 8 }}>{m.e}</div>
+                <div style={{ color: on ? T.pink : T.text, fontWeight: 600, fontSize: 12 }}>{m.l}</div>
+              </button>
+            );
+          })}
+        </div>
+        <div style={{ marginBottom: 32 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
+            <span style={{ color: T.muted, fontSize: 14 }}>Overwhelm level</span>
+            <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 16, color: T.pink }}>{state.overwhelm} / 10</span>
+          </div>
+          <input type="range" min={1} max={10} value={state.overwhelm} onChange={e => dispatch({ type: "OVERWHELM", v: +e.target.value })} style={{ width: "100%" }} />
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+            <span style={{ color: T.muted, fontSize: 11 }}>Calm</span>
+            <span style={{ color: T.muted, fontSize: 11 }}>Overwhelmed</span>
+          </div>
+        </div>
+        <Btn disabled={!state.mood} onClick={() => { dispatch({ type: "LOG_MOOD" }); if (userState.supabaseId) DB.logMood(userState.supabaseId, state.mood, state.overwhelm); nav("dump"); }}>Continue to Brain Dump →</Btn>
+      </div>
+      <Nav screen="checkin" nav={nav} />
+    </Shell>
+  );
+};
+
+// ── Brain Dump ────────────────────────────────────────────────────────────────
+const Dump = ({ state, dispatch, nav, userState, setUserState }) => {
+  const [text, setText] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [paywallType, setPaywallType] = useState("guest_limit");
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  const handleUpgrade = async (plan) => {
+    setCheckoutLoading(true);
+    try {
+      await DB.startCheckout(userState.supabaseId, userState.email, plan);
+    } catch (e) {
+      // Stripe not connected yet — simulate for testing
+      setUserState(u => ({ ...u, plan: PLANS.PRO, resetsLimit: 999 }));
+      setShowUpgradeModal(false);
+      setShowPaywall(false);
+    }
+    setCheckoutLoading(false);
+  };
+
+  const checkAccess = () => {
+    if (userState.plan === PLANS.GUEST && userState.resetsUsed >= 1) {
+      setPaywallType("guest_limit"); setShowPaywall(true); return false;
+    }
+    if (userState.plan === PLANS.FREE && userState.resetsUsed >= 3) {
+      setPaywallType("free_lock"); setShowPaywall(true); return false;
+    }
+    return true;
+  };
+
+  const softNudge = () => {
+    if (userState.plan === PLANS.FREE && userState.resetsUsed === 2) {
+      setPaywallType("free_soft"); setShowPaywall(true);
+    }
+  };
+
+  const analyze = async () => {
+    if (!checkAccess()) return;
+    if (!text.trim()) return;
+    setLoading(true); setErr("");
+    try {
+      const raw = await ai(`Extract 2-4 problems from this brain dump. Return ONLY JSON array, no markdown:\n[{"id":"p1","title":"short title","description":"one sentence","priority":8,"category":"work|personal|health|finance|relationship","emoji":"📋"}]\n\nBrain dump: "${text}"`);
+      const problems = JSON.parse(raw.replace(/```json|```/g, "").trim());
+      dispatch({ type: "SET_PROBS", v: problems.map(p => ({ ...p, steps: [], active: false, done: false })) });
+      setUserState(u => ({ ...u, resetsUsed: u.resetsUsed + 1 }));
+      softNudge();
+      nav("focus");
+    } catch {
+      setErr("AI unavailable — using quick mode.");
+      const probs = text.split("\n").filter(l => l.trim()).slice(0, 4).map((l, i) => ({
+        id: `p${i}`, title: l.trim().slice(0, 50), description: l.trim(),
+        priority: 8 - i * 2, category: "personal", emoji: "📋", steps: [], active: false, done: false,
+      }));
+      dispatch({ type: "SET_PROBS", v: probs });
+      setUserState(u => ({ ...u, resetsUsed: u.resetsUsed + 1 }));
+      nav("focus");
+    }
+    setLoading(false);
+  };
+
+  return (
+    <Shell>
+      <Bar />
+      {showPaywall && (
+        <Paywall
+          type={paywallType}
+          onClose={paywallType === "free_soft" ? () => setShowPaywall(false) : null}
+          onUpgrade={() => { setShowPaywall(false); setShowUpgradeModal(true); }}
+          onCreateAccount={() => { setUserState(u => ({ ...u, plan: PLANS.FREE, resetsLimit: 3, resetsUsed: 0, signupDate: new Date().toISOString() })); setShowPaywall(false); }}
+        />
+      )}
+      {showUpgradeModal && (
+        <UpgradeModal
+          loading={checkoutLoading}
+          onClose={() => setShowUpgradeModal(false)}
+          onSelect={handleUpgrade}
+        />
+      )}
+      <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px 40px" }}>
+        <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 20 }}>
+          <Back onClick={() => nav("home")} />
+          <h2 style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 20 }}>Brain Dump 🧠</h2>
+          {userState.plan === PLANS.FREE && (
+            <span style={{ marginLeft: "auto", color: T.muted, fontSize: 12, fontWeight: 700 }}>{userState.resetsUsed}/{userState.resetsLimit}</span>
+          )}
+        </div>
+        <p style={{ color: T.muted, fontSize: 13, lineHeight: 1.65, marginBottom: 18 }}>Get everything out. Don't filter — just write what's weighing on you, one thing per line.</p>
+        <textarea value={text} onChange={e => setText(e.target.value)} placeholder={"Work deadline tomorrow…\nForgot to call mom\nBills are due\nFeeling disconnected…"} style={{ width: "100%", minHeight: 200, background: T.card, border: `1px solid ${T.border}`, borderRadius: 18, padding: 16, color: T.text, fontSize: 14, resize: "none", lineHeight: 1.7, marginBottom: 16 }} />
+        {err && <p style={{ color: T.coral, fontSize: 12, marginBottom: 12 }}>{err}</p>}
+        <Btn onClick={analyze} disabled={!text.trim() || loading} style={{ marginBottom: 10 }}>
+          {loading ? <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}><Spinner /> Analyzing…</span> : "✨ Analyze with AI"}
+        </Btn>
+        <Btn outline onClick={() => {
+          if (!checkAccess()) return;
+          const probs = text.split("\n").filter(l => l.trim()).slice(0, 4).map((l, i) => ({ id: `p${i}`, title: l.trim().slice(0, 50), description: l.trim(), priority: 8 - i * 2, category: "personal", emoji: "📋", steps: [], active: false, done: false }));
+          dispatch({ type: "SET_PROBS", v: probs }); setUserState(u => ({ ...u, resetsUsed: u.resetsUsed + 1 })); nav("focus");
+        }} disabled={!text.trim()}>Skip AI →</Btn>
+      </div>
+      <Nav screen="dump" nav={nav} />
+    </Shell>
+  );
+};
+
+// ── Priority Focus — Sequential, one problem at a time ────────────────────────
+const Focus = ({ state, dispatch, nav }) => {
+  const sorted = [...state.problems].sort((a, b) => b.priority - a.priority);
+  const pending = sorted.filter(p => !p.done);
+  const completed = sorted.filter(p => p.done);
+  const current = pending[0] || null;
+  const totalProbs = state.problems.length;
+  const doneCount = completed.length;
+  const overallPct = totalProbs > 0 ? Math.round(doneCount / totalProbs * 100) : 0;
+
+  const startCurrent = () => {
+    if (!current) return;
+    dispatch({ type: "ACTIVATE", id: current.id });
+    nav("action");
+  };
+
+  return (
+    <Shell>
+      <Bar />
+      <LoadBar load={state.load} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px 100px" }}>
+        <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 20 }}>
+          <Back onClick={() => nav("dump")} />
+          <h2 style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 20 }}>Priority Focus 🎯</h2>
+        </div>
+
+        {/* Overall session progress */}
+        {totalProbs > 0 && (
+          <Card glow={overallPct === 100 ? T.green : T.purple} style={{ marginBottom: 20, background: overallPct === 100 ? `${T.green}0A` : `${T.purple}08` }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <span style={{ fontWeight: 700, fontSize: 14 }}>Session Progress</span>
+              <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 16, color: overallPct === 100 ? T.green : T.purple }}>{doneCount}/{totalProbs} done</span>
+            </div>
+            <div style={{ height: 6, background: T.faint, borderRadius: 3 }}>
+              <div style={{ height: "100%", borderRadius: 3, background: overallPct === 100 ? T.green : T.grad1, width: `${overallPct}%`, transition: "width 0.8s cubic-bezier(.22,.68,0,1.2)" }} />
+            </div>
+            <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
+              {sorted.map((p, i) => (
+                <div key={p.id} style={{ width: 10, height: 10, borderRadius: "50%", background: p.done ? T.green : i === sorted.indexOf(current) ? T.pink : T.faint, transition: "background 0.4s", border: i === sorted.indexOf(current) ? `2px solid ${T.pink}` : "none" }} title={p.title} />
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* All done! */}
+        {pending.length === 0 ? (
+          <div className="up" style={{ textAlign: "center", padding: "40px 0" }}>
+            <div className="float" style={{ fontSize: 72, marginBottom: 16 }}>🎉</div>
+            <h3 style={{ fontFamily: "'Syne',sans-serif", fontSize: 24, fontWeight: 800, marginBottom: 8, background: T.grad3, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>All Clear!</h3>
+            <p style={{ color: T.muted, fontSize: 14, marginBottom: 24 }}>You tackled every single thing weighing on you. That takes real strength.</p>
+            <Btn grad={T.grad3} onClick={() => nav("relief")} style={{ marginBottom: 10 }}>✨ Visit Relief Space</Btn>
+            <Btn outline onClick={() => nav("dump")}>Add More Problems</Btn>
+          </div>
+        ) : (
+          <>
+            {/* Current problem — featured */}
+            <div style={{ marginBottom: 8 }}>
+              <p style={{ color: T.pink, fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 12 }}>
+                {doneCount > 0 ? `✓ ${doneCount} done · Up next` : "Starting with your top priority"}
+              </p>
+              <div style={{ background: `linear-gradient(135deg,${T.pink}12,${T.purple}08)`, border: `2px solid ${T.pink}40`, borderRadius: 22, padding: 20, marginBottom: 20, animation: "up 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
+                <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 16 }}>
+                  <div style={{ width: 52, height: 52, borderRadius: 16, background: `${T.pink}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, flexShrink: 0 }}>{current.emoji}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 17, marginBottom: 5 }}>{current.title}</div>
+                    <div style={{ color: T.muted, fontSize: 13, lineHeight: 1.5, marginBottom: 10 }}>{current.description}</div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <Tag label={`Priority ${current.priority}/10`} color={T.pink} />
+                      <Tag label={current.category} color={T.purple} />
+                    </div>
+                  </div>
+                </div>
+                <Btn onClick={startCurrent}>⚡ Start Tackling This →</Btn>
+              </div>
+            </div>
+
+            {/* Upcoming queue — visible but locked */}
+            {pending.length > 1 && (
+              <>
+                <p style={{ color: T.muted, fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 12 }}>Up next ({pending.length - 1} remaining)</p>
+                {pending.slice(1).map((p, i) => (
+                  <div key={p.id} style={{ display: "flex", gap: 14, padding: "14px 16px", background: T.card, border: `1px solid ${T.border}`, borderRadius: 16, marginBottom: 8, opacity: 0.5, animation: `up 0.4s cubic-bezier(.22,.68,0,1.2) ${(i + 1) * 0.08}s both` }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 12, background: T.faint, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>{p.emoji}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>{p.title}</div>
+                      <Tag label={`P${p.priority}/10`} color={T.muted} />
+                    </div>
+                    <span style={{ color: T.faint, fontSize: 16, alignSelf: "center" }}>🔒</span>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {/* Completed section */}
+            {completed.length > 0 && (
+              <>
+                <p style={{ color: T.green, fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 12, marginTop: 20 }}>✓ Completed</p>
+                {completed.map((p, i) => (
+                  <div key={p.id} style={{ display: "flex", gap: 14, padding: "12px 16px", background: `${T.green}06`, border: `1px solid ${T.green}20`, borderRadius: 16, marginBottom: 8 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 12, background: `${T.green}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>{p.emoji}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: 14, color: T.muted, textDecoration: "line-through" }}>{p.title}</div>
+                    </div>
+                    <span style={{ color: T.green, fontSize: 16, alignSelf: "center" }}>✓</span>
+                  </div>
+                ))}
+              </>
+            )}
+          </>
+        )}
+      </div>
+      <Nav screen="focus" nav={nav} />
+    </Shell>
+  );
+};
+
+// ── Action Mode — AI-tailored steps per specific problem ──────────────────────
+const Action = ({ state, dispatch, nav, userState }) => {
+  const prob = state.problems.find(p => p.active);
+  const sorted = [...state.problems].sort((a, b) => b.priority - a.priority);
+  const pending = sorted.filter(p => !p.done);
+  const [loading, setLoading] = useState(false);
+  const [aiInsight, setAiInsight] = useState("");
+  const [showCelebration, setShowCelebration] = useState(false);
+  const prevProbId = useRef(null);
+
+  // Generate steps whenever a NEW problem becomes active
+  useEffect(() => {
+    if (!prob) return;
+    if (prob.id !== prevProbId.current) {
+      prevProbId.current = prob.id;
+      setAiInsight("");
+      setShowCelebration(false);
+      if (!prob.steps?.length) genSteps();
+    }
+  }, [prob?.id]);
+
+  const getSmartFallback = (title, description) => {
+    const text = (title + " " + description).toLowerCase();
+
+    // ── Investing / Money / Finance ──
+    if (/invest|stock|etf|fund|portfolio|market|crypto|bitcoin|brokerage|401k|ira|dividend|asset|wealth|fidelity|vanguard|robinhood/.test(text)) return [
+      { id:"s1", label:"Open a brokerage account (Fidelity, Schwab, or Robinhood) if you don't have one", done:false, mins:"15", tip:"The best investment is the one you actually start." },
+      { id:"s2", label:"Research index funds and ETFs — start with S&P 500 (VOO or SPY)", done:false, mins:"20", tip:"ETFs give you instant diversification with low fees." },
+      { id:"s3", label:"Set a monthly auto-invest amount, even if it's just $25", done:false, mins:"10", tip:"Consistency beats timing the market every time." },
+      { id:"s4", label:"Learn one financial concept today: compound interest, dollar-cost averaging, or diversification", done:false, mins:"15", tip:"Financial literacy is the foundation of real wealth." },
+      { id:"s5", label:"Write down your investing goal — retirement, wealth, passive income?", done:false, mins:"5", tip:"Your goal shapes your strategy." },
+    ];
+
+    // ── Relationship / Partner / Communication ──
+    if (/relationship|partner|boyfriend|girlfriend|spouse|husband|wife|communicate|communication|argument|fight|trust|intimacy|couple|dating|ex|breakup|love/.test(text)) return [
+      { id:"s1", label:"Write down exactly what you feel — not what happened, but how YOU feel", done:false, mins:"10", tip:"Clarity about your feelings is the first step to being heard." },
+      { id:"s2", label:"Choose a calm moment to talk — not during or right after an argument", done:false, mins:"5", tip:"Timing is everything in difficult conversations." },
+      { id:"s3", label:"Use 'I feel' statements instead of 'you always/never'", done:false, mins:"10", tip:"It shifts the conversation from blame to understanding." },
+      { id:"s4", label:"Listen to understand, not to respond — ask one open question", done:false, mins:"15", tip:"Feeling truly heard changes everything." },
+      { id:"s5", label:"Decide together on one small change you can both commit to this week", done:false, mins:"10", tip:"Small agreements build big trust." },
+    ];
+
+    // ── Job / Career / Work ──
+    if (/job|career|work|boss|coworker|fired|quit|resume|interview|salary|promotion|workplace|office|burnout|profession|hire|employed/.test(text)) return [
+      { id:"s1", label:`Write down specifically what's frustrating about "${title}" — be honest`, done:false, mins:"10", tip:"You can't solve what you haven't named clearly." },
+      { id:"s2", label:"List what you can control right now vs. what you can't", done:false, mins:"10", tip:"Focus only on what's in your hands." },
+      { id:"s3", label:"Identify one concrete next action — email, application, conversation, or skill", done:false, mins:"10", tip:"One action creates momentum." },
+      { id:"s4", label:"Set a deadline: when will you take that action?", done:false, mins:"5", tip:"Decisions without deadlines stay wishes." },
+    ];
+
+    // ── Family / Parents / Kids / Mom / Dad ──
+    if (/mom|dad|mother|father|parent|family|sibling|brother|sister|child|kids|son|daughter|grandma|grandpa|aunt|uncle|relative/.test(text)) return [
+      { id:"s1", label:`Reach out to ${/mom|mother/.test(text) ? "your mom" : /dad|father/.test(text) ? "your dad" : "the family member"} today — a text, call, or voice memo`, done:false, mins:"5", tip:"Reconnection starts with one small reach." },
+      { id:"s2", label:"Write down what you actually want to say or need from them", done:false, mins:"10", tip:"Getting clear privately helps you communicate better." },
+      { id:"s3", label:"Set a specific time to connect this week — put it on your calendar", done:false, mins:"5", tip:"Scheduled care is still real care." },
+      { id:"s4", label:"Let go of the need for a perfect outcome — focus on showing up", done:false, mins:"5", tip:"Effort matters even when results are uncertain." },
+    ];
+
+    // ── Health / Fitness / Sleep / Mental health ──
+    if (/health|sick|doctor|anxiety|stress|sleep|tired|fatigue|workout|exercise|diet|weight|therapy|mental|depression|panic|pain|medical|medication/.test(text)) return [
+      { id:"s1", label:"Schedule the appointment or action you've been avoiding", done:false, mins:"10", tip:"Done is better than perfect — book it now." },
+      { id:"s2", label:"Write down your symptoms or concerns so you're prepared", done:false, mins:"10", tip:"Clarity reduces anxiety about hard conversations." },
+      { id:"s3", label:"Identify one daily habit to start or stop this week", done:false, mins:"10", tip:"Health is built in small daily choices." },
+      { id:"s4", label:"Tell one trusted person how you're actually doing", done:false, mins:"5", tip:"You don't have to carry this alone." },
+    ];
+
+    // ── Money / Bills / Debt / Budget ──
+    if (/money|bill|debt|loan|credit|budget|rent|afford|broke|financial|spend|save|income|payment|owe|expense/.test(text)) return [
+      { id:"s1", label:"Write down every amount owed or due — face the numbers exactly", done:false, mins:"15", tip:"Clarity is less scary than the unknown." },
+      { id:"s2", label:"Prioritize: which is most urgent? Pay or contact that one first", done:false, mins:"10", tip:"One at a time always works." },
+      { id:"s3", label:"Look up one option: payment plan, assistance program, or consolidation", done:false, mins:"20", tip:"There are almost always more options than you think." },
+      { id:"s4", label:"Set a micro-goal: save or pay $X by a specific date", done:false, mins:"5", tip:"Small wins compound into big change." },
+    ];
+
+    // ── Friends / Social / Loneliness ──
+    if (/friend|friendship|social|lonely|loneliness|connect|isolat|people|network|community|belong/.test(text)) return [
+      { id:"s1", label:"Reach out to one person you've been meaning to contact — just say hi", done:false, mins:"5", tip:"Relationships survive on small consistent touches." },
+      { id:"s2", label:"Identify one place or activity where you could meet new people", done:false, mins:"10", tip:"Your people are out there — you have to go find them." },
+      { id:"s3", label:"Be honest with yourself: what's been keeping you from connecting?", done:false, mins:"10", tip:"Awareness of the barrier is how you remove it." },
+      { id:"s4", label:"Plan one real social interaction this week — coffee, walk, or call", done:false, mins:"5", tip:"Put it on the calendar so it actually happens." },
+    ];
+
+    // ── Self-improvement / Goals / Habits / Learning ──
+    if (/goal|habit|self|improve|learn|skill|grow|discipline|motivation|procrastinat|focus|productivity|read|study|course|degree/.test(text)) return [
+      { id:"s1", label:`Define what success looks like for "${title}" in specific, measurable terms`, done:false, mins:"10", tip:"Vague goals produce vague results." },
+      { id:"s2", label:"Identify the single smallest daily action that moves you toward it", done:false, mins:"10", tip:"1% better every day is 37x better in a year." },
+      { id:"s3", label:"Remove one obstacle or distraction blocking your progress", done:false, mins:"10", tip:"Subtraction is often more powerful than addition." },
+      { id:"s4", label:"Track your first 7 days — check off each day you do the action", done:false, mins:"5", tip:"What gets measured gets done." },
+    ];
+
+    // ── Housing / Moving / Apartment ──
+    if (/house|home|apartment|rent|move|moving|landlord|lease|neighborhood|roommate|mortgage/.test(text)) return [
+      { id:"s1", label:"Write down your non-negotiables and nice-to-haves for your situation", done:false, mins:"10", tip:"Knowing what you need narrows the decision." },
+      { id:"s2", label:"Research your specific options — listings, costs, timelines", done:false, mins:"20", tip:"Information turns vague anxiety into solvable steps." },
+      { id:"s3", label:"Reach out to one person who can help — landlord, realtor, or friend who's done it", done:false, mins:"10", tip:"Most people are more helpful than you expect." },
+      { id:"s4", label:"Set a decision deadline so this doesn't stay open-ended", done:false, mins:"5", tip:"Open loops drain energy. Close them." },
+    ];
+
+    // ── Default smart fallback — still uses the actual title ──
+    return [
+      { id:"s1", label:`Write down everything you know about "${title}" — all facts, feelings, and fears`, done:false, mins:"10", tip:"Getting it all out reduces its mental weight." },
+      { id:"s2", label:"Identify the single root cause or the most urgent piece", done:false, mins:"10", tip:"Most problems have one key lever." },
+      { id:"s3", label:`Find one concrete action you can take on "${title}" in the next 24 hours`, done:false, mins:"10", tip:"Action dissolves anxiety." },
+      { id:"s4", label:"Tell one person about this — accountability changes everything", done:false, mins:"5", tip:"Saying it out loud makes it real and solvable." },
+      { id:"s5", label:"Set a reminder to check your progress in 3 days", done:false, mins:"2", tip:"Follow-through is where goals live or die." },
+    ];
+  };
+
+  const genSteps = async () => {
+    if (!prob) return;
+    setLoading(true);
+
+    // STEP 1: Show smart keyword steps IMMEDIATELY — no waiting, no network needed
+    const immediateSteps = getSmartFallback(prob.title, prob.description || "");
+    dispatch({ type: "SET_STEPS", id: prob.id, steps: immediateSteps });
+    setLoading(false); // User sees real tailored steps right away
+
+    // STEP 2: Try to upgrade silently with AI in background
+    try {
+      const prompt = `You are a practical life coach. A person wrote: "${prob.title}". Description: "${prob.description || prob.title}".
+Give 5 SPECIFIC steps for THIS exact problem only. CRITICAL: If about investing — mention ETFs, index funds, brokerage, Fidelity. If about relationship — mention talking to the person, boundaries, space. If about job — mention resume, boss, applying. Zero generic advice. Max 10 words per label.
+Return ONLY valid JSON array, nothing else:
+[{"id":"s1","label":"specific step","done":false,"mins":"10","tip":"encouragement"}]`;
+      const raw = await ai(prompt, 700);
+      const cleaned = raw.replace(/\`\`\`json\s*/gi, "").replace(/\`\`\`\s*/gi, "").trim();
+      const jsonMatch = cleaned.match(/\[[\s\S]*?\]/);
+      if (!jsonMatch) return;
+      const steps = JSON.parse(jsonMatch[0]);
+      if (!Array.isArray(steps) || steps.length === 0) return;
+      const firstLabel = (steps[0]?.label || "").toLowerCase();
+      const isGeneric = firstLabel.includes("sit with") || firstLabel.includes("write down what you can control") || firstLabel.includes("kind to yourself");
+      if (!isGeneric) dispatch({ type: "SET_STEPS", id: prob.id, steps });
+      try {
+        const ins = await ai(`One warm specific sentence reframing: "${prob.title}". Not generic.`, 70);
+        if (ins) setAiInsight(ins.replace(/^"|"$/g, "").trim());
+      } catch {}
+    } catch {}
+  };
+
+  const handleComplete = () => {
+    setShowCelebration(true);
+    dispatch({ type: "COMPLETE", id: prob.id });
+    setTimeout(() => {
+      setShowCelebration(false);
+      // Check if there are more pending problems after this one
+      const remaining = pending.filter(p => p.id !== prob.id);
+      if (remaining.length > 0) {
+        dispatch({ type: "ACTIVATE", id: remaining[0].id });
+      } else {
+        // All done — save completed session to Supabase
+        if (userState.supabaseId) {
+          DB.saveSession(userState.supabaseId, state.problems.map(p => p.id === prob.id ? { ...p, done: true } : p));
+          // Increment resets used in DB
+          DB.updateProfile(userState.supabaseId, { resets_used: (userState.resetsUsed || 0) + 1 });
+        }
+        nav("relief");
+      }
+    }, 2200);
+  };
+
+  if (!prob) return (
+    <Shell>
+      <Bar />
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 16, padding: 24 }}>
+        <span style={{ fontSize: 48 }}>🎯</span>
+        <p style={{ color: T.muted, textAlign: "center" }}>No active problem. Go to Focus to select one.</p>
+        <Btn onClick={() => nav("focus")} small>Go to Focus</Btn>
+      </div>
+    </Shell>
+  );
+
+  const done = prob.steps?.filter(s => s.done).length || 0;
+  const total = prob.steps?.length || 1;
+  const pct = Math.round(done / total * 100);
+  const allStepsDone = pct === 100 && total > 0 && !loading;
+  const probIndex = sorted.findIndex(p => p.id === prob.id);
+  const remainingAfter = pending.filter(p => p.id !== prob.id).length;
+
+  // Celebration overlay
+  if (showCelebration) return (
+    <Shell>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, gap: 20 }}>
+        <div className="float" style={{ fontSize: 80 }}>🎊</div>
+        <h2 style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 26, textAlign: "center", background: T.grad3, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+          {prob.title} — Done!
+        </h2>
+        <p style={{ color: T.muted, fontSize: 15, textAlign: "center", lineHeight: 1.7 }}>
+          {remainingAfter > 0
+            ? `Amazing work. Loading your next focus in a moment…`
+            : `You've cleared your entire list. Incredible.`}
+        </p>
+        {remainingAfter > 0 && (
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <Spinner />
+            <span style={{ color: T.muted, fontSize: 13 }}>Preparing next problem…</span>
+          </div>
+        )}
+      </div>
+    </Shell>
+  );
+
+  return (
+    <Shell>
+      <Bar />
+      <LoadBar load={state.load} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px 100px" }}>
+
+        {/* Header with problem count */}
+        <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16 }}>
+          <Back onClick={() => nav("focus")} />
+          <h2 style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 20 }}>Action Mode ⚡</h2>
+          <span style={{ marginLeft: "auto", background: `${T.pink}18`, border: `1px solid ${T.pink}30`, borderRadius: 20, padding: "4px 12px", color: T.pink, fontSize: 11, fontWeight: 700 }}>
+            {probIndex + 1} of {sorted.length}
+          </span>
+        </div>
+
+        {/* Problem card */}
+        <Card glow={T.pink} style={{ marginBottom: aiInsight ? 10 : 18, background: `linear-gradient(135deg,${T.pink}10,${T.purple}06)` }}>
+          <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 14 }}>
+            <div style={{ width: 48, height: 48, borderRadius: 14, background: `${T.pink}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0 }}>{prob.emoji}</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 16, marginBottom: 4 }}>{prob.title}</div>
+              <div style={{ color: T.muted, fontSize: 12, marginBottom: 8 }}>{prob.description}</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <Tag label={`${done}/${total} steps`} color={pct === 100 ? T.green : T.pink} />
+                <Tag label={prob.category} color={T.purple} />
+              </div>
+            </div>
+          </div>
+          <div style={{ height: 6, background: T.faint, borderRadius: 3 }}>
+            <div style={{ height: "100%", borderRadius: 3, background: pct === 100 ? T.green : T.grad1, width: `${pct}%`, transition: "width 0.5s ease" }} />
+          </div>
+        </Card>
+
+        {/* AI Insight */}
+        {aiInsight && !loading && (
+          <div style={{ background: `${T.cyan}08`, border: `1px solid ${T.cyan}20`, borderRadius: 14, padding: "10px 14px", marginBottom: 16, display: "flex", gap: 10, alignItems: "flex-start", animation: "up 0.4s ease" }}>
+            <span style={{ fontSize: 16, flexShrink: 0 }}>💡</span>
+            <p style={{ color: T.cyan, fontSize: 12, lineHeight: 1.6, fontStyle: "italic" }}>{aiInsight}</p>
+          </div>
+        )}
+
+        {/* Loading state */}
+        {loading && (
+          <div style={{ textAlign: "center", padding: "36px 0" }}>
+            <Spinner />
+            <p style={{ color: T.muted, fontSize: 13, marginTop: 12 }}>AI analyzing "{prob.title}"…</p>
+            <p style={{ color: T.faint, fontSize: 11, marginTop: 4 }}>Crafting steps tailored just for this</p>
+          </div>
+        )}
+
+        {/* Steps */}
+        {!loading && prob.steps?.map((s, i) => (
+          <div key={s.id} onClick={() => dispatch({ type: "TOGGLE_STEP", id: s.id })}
+            style={{ display: "flex", gap: 14, padding: "14px 16px", background: s.done ? `${T.green}0E` : T.card, border: `1px solid ${s.done ? T.green : T.border}`, borderRadius: 16, marginBottom: 10, cursor: "pointer", transition: "all 0.22s", animation: `up 0.4s cubic-bezier(.22,.68,0,1.2) ${i * 0.06}s both` }}>
+            <div style={{ width: 30, height: 30, borderRadius: "50%", border: `2px solid ${s.done ? T.green : T.border}`, background: s.done ? T.green : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.25s", marginTop: 2 }}>
+              {s.done && <span style={{ color: "#000", fontSize: 13, fontWeight: 900, animation: "check 0.35s cubic-bezier(.22,.68,0,1.2)" }}>✓</span>}
+              {!s.done && <span style={{ color: T.muted, fontSize: 10, fontWeight: 700 }}>{i + 1}</span>}
+            </div>
+            <div style={{ flex: 1 }}>
+              <span style={{ fontWeight: 600, fontSize: 14, textDecoration: s.done ? "line-through" : "none", color: s.done ? T.muted : T.text, display: "block", marginBottom: s.mins || s.tip ? 4 : 0 }}>{s.label}</span>
+              {s.mins && <span style={{ color: T.muted, fontSize: 11, marginRight: 8 }}>⏱ {s.mins} min</span>}
+              {s.tip && !s.done && <p style={{ color: `${T.purple}CC`, fontSize: 11, marginTop: 4, fontStyle: "italic" }}>"{s.tip}"</p>}
+            </div>
+          </div>
+        ))}
+
+        {/* Complete button */}
+        {allStepsDone && (
+          <div style={{ animation: "up 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
+            <div style={{ background: `${T.green}0A`, border: `1px solid ${T.green}25`, borderRadius: 14, padding: "12px 16px", marginBottom: 14, textAlign: "center" }}>
+              <p style={{ color: T.green, fontWeight: 700, fontSize: 14 }}>🎉 All steps complete!</p>
+              {remainingAfter > 0 && <p style={{ color: T.muted, fontSize: 12, marginTop: 4 }}>{remainingAfter} more problem{remainingAfter > 1 ? "s" : ""} waiting for you</p>}
+            </div>
+            <Btn grad={remainingAfter > 0 ? T.grad1 : T.grad3} onClick={handleComplete}>
+              {remainingAfter > 0 ? `✅ Done → Next Problem (${remainingAfter} left)` : "✅ Complete — All Done!"}
+            </Btn>
+          </div>
+        )}
+      </div>
+      <Nav screen="action" nav={nav} />
+    </Shell>
+  );
+};
+
+// ── Relief ────────────────────────────────────────────────────────────────────
+const Relief = ({ state, nav }) => {
+  const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    ai(`Write a warm, genuine 2-sentence encouraging message for ${state.name || "someone"} who just made progress on their mental load. Not cheesy — real and human.`, 200)
+      .then(t => { setMsg(t); setLoading(false); })
+      .catch(() => { setMsg("You showed up for yourself today — that takes real courage. Keep going."); setLoading(false); });
+  }, []);
+  return (
+    <Shell>
+      <Bar />
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 28px 48px", gap: 28 }}>
+        <div className="up" style={{ textAlign: "center" }}>
+          <div className="float" style={{ fontSize: 72, display: "block", marginBottom: 16 }}>🕊️</div>
+          <h2 style={{ fontFamily: "'Syne',sans-serif", fontSize: 28, fontWeight: 800, marginBottom: 16 }}>Relief Space</h2>
+          {loading ? <div style={{ display: "flex", justifyContent: "center" }}><Spinner /></div> : (
+            <p style={{ color: T.muted, fontSize: 15, lineHeight: 1.75, fontStyle: "italic" }}>"{msg}"</p>
+          )}
+        </div>
+        <Card glow={T.gold} style={{ textAlign: "center", background: `${T.gold}0A` }}>
+          <div style={{ fontSize: 40, marginBottom: 8 }}>🔥</div>
+          <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 22, color: T.gold }}>{state.streak}-Day Streak</div>
+          <div style={{ color: T.muted, fontSize: 13, marginTop: 4 }}>Mental load: {Math.round(state.load)}% remaining</div>
+        </Card>
+        <Btn onClick={() => nav("home")}>← Back to Home</Btn>
+        <Btn outline onClick={() => nav("hub")}>✦ Open Mental Hub</Btn>
+      </div>
+      <Nav screen="relief" nav={nav} />
+    </Shell>
+  );
+};
+
+// ── Progress ──────────────────────────────────────────────────────────────────
+const Progress = ({ state }) => (
+  <Shell>
+    <Bar />
+    <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px 100px" }}>
+      <h2 style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 22, marginBottom: 20 }}>Your Progress 📊</h2>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
+        {[["🔥", state.streak, "Day Streak", T.gold], ["✅", state.tasksDone, "Tasks Done", T.green], ["🎯", `${state.tasksTotal === 0 ? 0 : Math.round(state.tasksDone / state.tasksTotal * 100)}%`, "Success Rate", T.cyan], ["🧠", `${Math.round(state.load)}%`, "Load Left", T.purple]].map(([e, v, l, c], i) => (
+          <Card key={i} glow={c} style={{ textAlign: "center", animation: `up 0.4s cubic-bezier(.22,.68,0,1.2) ${i * 0.08}s both` }}>
+            <div style={{ fontSize: 28, marginBottom: 8 }}>{e}</div>
+            <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 24, color: c }}>{v}</div>
+            <div style={{ color: T.muted, fontSize: 12 }}>{l}</div>
+          </Card>
+        ))}
+      </div>
+      <h3 style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>Mood History</h3>
+      {state.moodLog.length === 0 ? (
+        <Card><p style={{ color: T.muted, fontSize: 13 }}>No mood entries yet. Start a check-in!</p></Card>
+      ) : state.moodLog.slice(-7).reverse().map((m, i) => (
+        <div key={i} style={{ display: "flex", gap: 12, padding: "10px 14px", background: T.card, borderRadius: 14, marginBottom: 8, border: `1px solid ${T.border}` }}>
+          <span style={{ fontSize: 20 }}>{m.mood?.e || "😐"}</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 600, fontSize: 13 }}>{m.mood?.l || "Unknown"}</div>
+            <div style={{ color: T.muted, fontSize: 11 }}>Overwhelm: {m.overwhelm}/10</div>
+          </div>
+          <span style={{ color: T.muted, fontSize: 11 }}>{m.date}</span>
+        </div>
+      ))}
+    </div>
+    <Nav screen="progress" nav={() => {}} />
+  </Shell>
+);
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  PROFILE — Fully Editable with Notifications
+// ══════════════════════════════════════════════════════════════════════════════
+const Profile = ({ state, dispatch, nav, userState, setUserState }) => {
+  const [editMode, setEditMode] = useState(false);
+  const [tab, setTab] = useState("profile"); // profile | notifications | plan
+  const [form, setForm] = useState({
+    username: userState.username || userState.name || "",
+    email: userState.email || "",
+    phone: userState.phone || "",
+  });
+  const [saved, setSaved] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  const handleUpgrade = async (plan) => {
+    setCheckoutLoading(true);
+    try {
+      await DB.startCheckout(userState.supabaseId, userState.email, plan);
+    } catch (e) {
+      setUserState(u => ({ ...u, plan: PLANS.PRO, resetsLimit: 999 }));
+      setShowUpgradeModal(false);
+    }
+    setCheckoutLoading(false);
+  };
+
+  const saveProfile = () => {
+    setUserState(u => ({ ...u, username: form.username, email: form.email, phone: form.phone }));
+    setSaved(true);
+    setEditMode(false);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const toggleNotif = (key) => {
+    setUserState(u => ({ ...u, notifications: { ...u.notifications, [key]: !u.notifications[key] } }));
+  };
+
+  const isPro = userState.plan === PLANS.PRO;
+  const isFree = userState.plan === PLANS.FREE;
+  const isGuest = userState.plan === PLANS.GUEST;
+
+  const planLabel = isPro ? "Pro ⚡" : isFree ? "Free" : "Guest";
+  const planColor = isPro ? T.gold : isFree ? T.cyan : T.muted;
+
+  const notifSettings = [
+    { key: "dailyReminder", label: "Daily Check-In Reminder", desc: "Get nudged every day to check in", icon: "⏰" },
+    { key: "weeklyInsight", label: "Weekly Insight Summary", desc: "Your patterns and progress each week", icon: "📊" },
+    { key: "email", label: "Email Notifications", desc: "Reminders sent to your email", icon: "📧", requires: "email" },
+    { key: "sms", label: "SMS Reminders", desc: "Text reminders to your phone", icon: "📱", requires: "phone" },
+  ];
+
+  return (
+    <Shell>
+      <Bar />
+      {showUpgrade && (
+        <Paywall
+          type="free_soft"
+          onClose={() => setShowUpgrade(false)}
+          onUpgrade={() => { setShowUpgrade(false); setShowUpgradeModal(true); }}
+        />
+      )}
+      {showUpgradeModal && (
+        <UpgradeModal
+          loading={checkoutLoading}
+          onClose={() => setShowUpgradeModal(false)}
+          onSelect={handleUpgrade}
+        />
+      )}
+      <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px 100px" }}>
+        <h2 style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 22, marginBottom: 20 }}>Profile ◉</h2>
+
+        {/* Avatar + Name */}
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <div style={{ width: 80, height: 80, borderRadius: "50%", background: T.grad1, margin: "0 auto 14px", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 36, position: "relative" }}>
+            {(userState.username || userState.name || "G")[0].toUpperCase()}
+            <div style={{ position: "absolute", bottom: 0, right: 0, width: 24, height: 24, borderRadius: "50%", background: planColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, border: `2px solid ${T.surface}` }}>
+              {isPro ? "⚡" : isFree ? "✓" : "G"}
+            </div>
+          </div>
+          <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 20 }}>{userState.username || userState.name || "Guest"}</div>
+          <div style={{ color: planColor, fontSize: 13, marginTop: 4, fontWeight: 700 }}>Decision Reset {planLabel}</div>
+        </div>
+
+        {/* Tab nav */}
+        <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
+          {[["profile", "👤", "Profile"], ["notifications", "🔔", "Alerts"], ["plan", "⚡", "Plan"]].map(([id, icon, label]) => (
+            <button key={id} onClick={() => setTab(id)} style={{ flex: 1, background: tab === id ? T.grad1 : "rgba(255,255,255,0.05)", border: `1px solid ${tab === id ? "transparent" : T.border}`, borderRadius: 14, padding: "10px 4px", color: "#fff", fontFamily: "'DM Sans',sans-serif", fontWeight: 700, fontSize: 11, cursor: "pointer", transition: "all 0.18s" }}>
+              <div style={{ fontSize: 16, marginBottom: 2 }}>{icon}</div>{label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── PROFILE TAB ── */}
+        {tab === "profile" && (
+          <div style={{ animation: "slideIn 0.3s ease" }}>
+            {!editMode ? (
+              <>
+                {[["👤", "Username", userState.username || userState.name || "—"], ["📧", "Email", userState.email || "Not set"], ["📱", "Phone", userState.phone || "Not set"]].map(([icon, label, val], i) => (
+                  <Card key={i} style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 14 }}>
+                    <span style={{ fontSize: 20 }}>{icon}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: T.muted, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>{label}</div>
+                      <div style={{ fontWeight: 600, fontSize: 14, marginTop: 2 }}>{val}</div>
+                    </div>
+                  </Card>
+                ))}
+
+                {/* Stats */}
+                {[["🔥", "Current Streak", `${state.streak} days`, T.gold], ["✅", "Tasks Completed", state.tasksDone, T.green], ["📊", "Success Rate", `${state.tasksTotal === 0 ? 0 : Math.round(state.tasksDone / state.tasksTotal * 100)}%`, T.cyan]].map(([e, l, v, c], i) => (
+                  <Card key={i} style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 14 }}>
+                    <span style={{ fontSize: 22 }}>{e}</span>
+                    <div style={{ flex: 1, fontWeight: 600, fontSize: 14 }}>{l}</div>
+                    <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 18, color: c }}>{v}</div>
+                  </Card>
+                ))}
+
+                {saved && <p style={{ color: T.green, textAlign: "center", fontSize: 13, fontWeight: 700, marginBottom: 12, animation: "up 0.3s ease" }}>✓ Profile saved!</p>}
+                <Btn outline onClick={() => setEditMode(true)} style={{ marginBottom: 10 }}>✏️ Edit Profile</Btn>
+                <Btn outline onClick={async () => { await DB.signOut(); dispatch({ type: "RESET" }); nav("welcome"); }} style={{ color: T.coral, borderColor: T.coral + "40" }}>Sign Out</Btn>
+              </>
+            ) : (
+              <div style={{ animation: "slideIn 0.3s ease" }}>
+                <p style={{ color: T.muted, fontSize: 13, marginBottom: 20 }}>Update your profile information below.</p>
+                {[
+                  { key: "username", label: "Username", placeholder: "Your display name", icon: "👤" },
+                  { key: "email", label: "Email Address", placeholder: "you@example.com", icon: "📧", type: "email" },
+                  { key: "phone", label: "Phone Number", placeholder: "+1 (555) 000-0000", icon: "📱", type: "tel" },
+                ].map(field => (
+                  <div key={field.key} style={{ marginBottom: 16 }}>
+                    <label style={{ color: T.muted, fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                      <span>{field.icon}</span>{field.label}
+                    </label>
+                    <input
+                      type={field.type || "text"}
+                      value={form[field.key]}
+                      onChange={e => setForm(f => ({ ...f, [field.key]: e.target.value }))}
+                      placeholder={field.placeholder}
+                      style={{ width: "100%", background: T.card, border: `1px solid ${T.border}`, borderRadius: 14, padding: "13px 16px", color: T.text, fontSize: 14 }}
+                    />
+                  </div>
+                ))}
+                <Btn onClick={saveProfile} style={{ marginBottom: 10 }}>💾 Save Changes</Btn>
+                <Btn outline onClick={() => setEditMode(false)}>Cancel</Btn>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── NOTIFICATIONS TAB ── */}
+        {tab === "notifications" && (
+          <div style={{ animation: "slideIn 0.3s ease" }}>
+            <p style={{ color: T.muted, fontSize: 13, marginBottom: 20, lineHeight: 1.6 }}>Choose how and when you'd like to be reminded to show up for yourself.</p>
+
+            {notifSettings.map((n, i) => {
+              const isOn = userState.notifications[n.key];
+              const missingField = n.requires && !userState[n.requires];
+              return (
+                <Card key={i} style={{ marginBottom: 10, opacity: missingField ? 0.5 : 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                    <span style={{ fontSize: 22 }}>{n.icon}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{n.label}</div>
+                      <div style={{ color: T.muted, fontSize: 11, marginTop: 2 }}>{missingField ? `Add your ${n.requires} first` : n.desc}</div>
+                    </div>
+                    <Toggle on={isOn && !missingField} onChange={() => !missingField && toggleNotif(n.key)} color={T.pink} />
+                  </div>
+                </Card>
+              );
+            })}
+
+            {(!userState.email || !userState.phone) && (
+              <Card glow={T.gold} style={{ background: `${T.gold}08`, marginTop: 8 }}>
+                <p style={{ color: T.gold, fontSize: 12, fontWeight: 700, marginBottom: 4 }}>💡 Add contact info</p>
+                <p style={{ color: T.muted, fontSize: 12 }}>Go to the Profile tab to add your email or phone to unlock email and SMS reminders.</p>
+              </Card>
+            )}
+
+            <p style={{ color: T.muted, fontSize: 11, textAlign: "center", marginTop: 16, lineHeight: 1.6 }}>
+              Notification delivery requires integration with a backend service. These settings are saved to your profile for when the service is connected.
+            </p>
+          </div>
+        )}
+
+        {/* ── PLAN TAB ── */}
+        {tab === "plan" && (
+          <div style={{ animation: "slideIn 0.3s ease" }}>
+            {/* Current plan */}
+            <Card glow={planColor} style={{ background: `${planColor}08`, marginBottom: 16, textAlign: "center" }}>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 22, color: planColor, marginBottom: 4 }}>
+                {isPro ? "⚡ Pro Plan" : isFree ? "Free Plan" : "Guest Access"}
+              </div>
+              <p style={{ color: T.muted, fontSize: 13 }}>
+                {isPro ? "You have unlimited access to all features." : isFree ? `${userState.resetsUsed} of ${userState.resetsLimit} resets used this month.` : "Limited to 1 reset total."}
+              </p>
+              {isFree && <UsageBar used={userState.resetsUsed} limit={userState.resetsLimit} color={T.pink} />}
+            </Card>
+
+            {!isPro && (
+              <>
+                <Card glow={T.purple} style={{ background: `${T.purple}08`, marginBottom: 16 }}>
+                  <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 16, color: T.purple, marginBottom: 12 }}>⚡ Pro Plan — $7.99/mo</div>
+                  {["Unlimited decision resets", "Advanced AI step breakdown", "Long-term pattern analysis", "Full routine customization", "Unlimited journal prompts", "Meditation personalization", "Full history access"].map((f, i) => (
+                    <div key={i} style={{ display: "flex", gap: 10, padding: "6px 0", borderTop: i > 0 ? `1px solid ${T.faint}` : "none" }}>
+                      <span style={{ color: T.green }}>✓</span>
+                      <span style={{ fontSize: 13 }}>{f}</span>
+                    </div>
+                  ))}
+                </Card>
+                <Btn onClick={() => setShowUpgradeModal(true)} style={{ marginBottom: 10 }}>✨ Upgrade to Pro</Btn>
+              </>
+            )}
+
+            {isPro && (
+              <Card glow={T.green} style={{ background: `${T.green}08`, textAlign: "center" }}>
+                <div style={{ fontSize: 40, marginBottom: 8 }}>🎉</div>
+                <p style={{ color: T.green, fontWeight: 700, fontSize: 14 }}>You're on Pro — enjoy unlimited access!</p>
+              </Card>
+            )}
+
+            {/* Free vs Pro comparison */}
+            <Card style={{ marginTop: 16 }}>
+              <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 12 }}>Plan Comparison</p>
+              {[
+                ["Decision Resets", "3/month", "Unlimited"],
+                ["AI Analysis", "Basic", "Advanced + Patterns"],
+                ["Journal Prompts", "5 rotating", "Unlimited"],
+                ["Routine Builder", "Basic", "Full custom"],
+                ["History", "30 days", "Forever"],
+                ["Meditation", "—", "Personalized"],
+              ].map(([feat, free, pro], i) => (
+                <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, padding: "8px 0", borderTop: i > 0 ? `1px solid ${T.faint}` : "none", alignItems: "center" }}>
+                  <span style={{ color: T.muted, fontSize: 11 }}>{feat}</span>
+                  <span style={{ color: isFree && !isPro ? T.cyan : T.muted, fontSize: 11, textAlign: "center" }}>{free}</span>
+                  <span style={{ color: isPro ? T.gold : T.muted, fontSize: 11, textAlign: "center", fontWeight: isPro ? 700 : 400 }}>{pro}</span>
+                </div>
+              ))}
+            </Card>
+          </div>
+        )}
+      </div>
+      <Nav screen="profile" nav={nav} />
+    </Shell>
+  );
+};
+
+// ── Journal ───────────────────────────────────────────────────────────────────
+const Journal = ({ state, nav, userState }) => {
+  const [entry, setEntry] = useState("");
+  const [entries, setEntries] = useState([]);
+  const [prompt, setPrompt] = useState("What's weighing on you most right now?");
+  const [loading, setLoading] = useState(false);
+  const isPro = userState.plan === PLANS.PRO;
+  const freePrompts = ["What's weighing on you most right now?", "What would make today feel complete?", "What are you avoiding, and why?", "What do you need more of in your life?", "What small win can you celebrate today?"];
+  const [freeIdx, setFreeIdx] = useState(0);
+
+  const newPrompt = async () => {
+    if (!isPro) { setFreeIdx(i => (i + 1) % freePrompts.length); setPrompt(freePrompts[(freeIdx + 1) % freePrompts.length]); return; }
+    setLoading(true);
+    try { setPrompt(await ai("Give one thoughtful journal prompt for mental wellness. Just the prompt itself, no intro.", 80)); }
+    catch { setPrompt("What would make today feel complete?"); }
+    setLoading(false);
+  };
+
+  const save = () => {
+    if (!entry.trim()) return;
+    setEntries(e => [{ text: entry, date: new Date().toLocaleDateString(), prompt }, ...e]);
+    setEntry(""); newPrompt();
+  };
+
+  return (
+    <Shell>
+      <Bar />
+      <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px 100px" }}>
+        <h2 style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 22, marginBottom: 18 }}>Journal ◈</h2>
+        {!isPro && (
+          <div style={{ background: `${T.purple}0A`, border: `1px solid ${T.purple}20`, borderRadius: 12, padding: "8px 14px", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ color: T.muted, fontSize: 11 }}>5 rotating prompts on Free plan</span>
+            <span style={{ color: T.purple, fontSize: 11, fontWeight: 700 }}>Prompt {freeIdx + 1}/5</span>
+          </div>
+        )}
+        <Card glow={T.pink} style={{ marginBottom: 18, background: `${T.pink}08` }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+            <Tag label="Today's Prompt" color={T.pink} />
+            <button onClick={newPrompt} style={{ background: "none", border: "none", color: T.pink, fontSize: 12, fontWeight: 600 }}>{loading ? "…" : "↺ New"}</button>
+          </div>
+          <p style={{ fontStyle: "italic", fontSize: 14, lineHeight: 1.65, color: T.text }}>"{prompt}"</p>
+        </Card>
+        <textarea value={entry} onChange={e => setEntry(e.target.value)} placeholder="Write freely…" style={{ width: "100%", minHeight: 160, background: T.card, border: `1px solid ${T.border}`, borderRadius: 16, padding: 16, color: T.text, fontSize: 14, resize: "none", lineHeight: 1.7, marginBottom: 14 }} />
+        <Btn disabled={!entry.trim()} onClick={save} style={{ marginBottom: 24 }}>Save Entry</Btn>
+        {entries.map((e, i) => (
+          <Card key={i} style={{ marginBottom: 10, opacity: 0.85 }}>
+            <p style={{ color: T.muted, fontSize: 11, marginBottom: 6 }}>{e.date}</p>
+            <p style={{ fontSize: 13, lineHeight: 1.65 }}>{e.text.slice(0, 160)}{e.text.length > 160 ? "…" : ""}</p>
+          </Card>
+        ))}
+      </div>
+      <Nav screen="journal" nav={nav} />
+    </Shell>
+  );
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  MENTAL HUB (condensed but complete)
+// ══════════════════════════════════════════════════════════════════════════════
+const TEMPLATES = [
+  { id:"rt1",emoji:"🏠",title:"How to Keep a Clean Home",color:"#e04cb2",tag:"Cleaning",desc:"Daily, weekly & monthly cleaning system",sections:[{label:"EVERYDAY",icon:"🧹",freq:"daily"},{label:"EVERY WEEK",icon:"📅",freq:"weekly"},{label:"EVERY MONTH",icon:"🗓️",freq:"monthly"}],tasks:[{time:"07:00",label:"Make bed",freq:"daily"},{time:"07:15",label:"Clean coffee maker",freq:"daily"},{time:"07:20",label:"Clean dirty dishes",freq:"daily"},{time:"07:30",label:"Take out trash",freq:"daily"},{time:"09:00",label:"Mop floors",freq:"weekly"},{time:"09:30",label:"Clean all bathroom surfaces",freq:"weekly"},{time:"10:00",label:"Clean mirrors",freq:"weekly"},{time:"10:30",label:"Dust furniture",freq:"weekly"},{time:"11:00",label:"Change bedding",freq:"weekly"},{time:"09:00",label:"Clean inside appliances",freq:"monthly"},{time:"10:00",label:"Clean all cabinetry",freq:"monthly"},{time:"11:00",label:"Vacuum baseboards & vents",freq:"monthly"},{time:"12:00",label:"Clean doors & windows",freq:"monthly"}]},
+  { id:"rt2",emoji:"✅",title:"The 6/10 Cleaning List",color:"#FF6B6B",tag:"Cleaning",desc:"Daily 6 essentials + Weekly 10 deep-cleans",sections:[{label:"THE DAILY 6",icon:"6️⃣",freq:"daily"},{label:"THE WEEKLY 10",icon:"🔟",freq:"weekly"}],tasks:[{time:"08:00",label:"Make Beds",freq:"daily"},{time:"08:10",label:"Wash dishes",freq:"daily"},{time:"08:20",label:"Scrub sink",freq:"daily"},{time:"08:30",label:"Wipe counters",freq:"daily"},{time:"08:40",label:"Vacuum floors",freq:"daily"},{time:"09:00",label:"1 load of laundry",freq:"daily"},{time:"09:00",label:"Wipe out fridge",freq:"weekly"},{time:"09:20",label:"Wipe microwave",freq:"weekly"},{time:"09:40",label:"Tidy pantry",freq:"weekly"},{time:"10:00",label:"Mop floors",freq:"weekly"},{time:"10:20",label:"Clean bathrooms",freq:"weekly"},{time:"10:40",label:"Clean sink drains",freq:"weekly"},{time:"11:00",label:"Dust furniture",freq:"weekly"},{time:"11:20",label:"Wash bedding",freq:"weekly"},{time:"11:40",label:"Tidy car",freq:"weekly"},{time:"12:00",label:"Clean pets' bowls",freq:"weekly"}]},
+  { id:"rt3",emoji:"👩‍💼",title:"City Lady's Morning Routine",color:"#9B5DE5",tag:"Morning",desc:"Elegant & productive morning in under 60 min",sections:[{label:"MORNING FLOW",icon:"🌸",freq:"daily"}],tasks:[{time:"06:32",label:"Wake up early",freq:"daily"},{time:"06:34",label:"Yoga",freq:"daily"},{time:"06:35",label:"Take a shower",freq:"daily"},{time:"06:50",label:"Healthy breakfast",freq:"daily"},{time:"07:00",label:"Check your email",freq:"daily"},{time:"07:15",label:"Set up lunch boxes",freq:"daily"},{time:"07:25",label:"Be grateful / journal",freq:"daily"}]},
+  { id:"rt4",emoji:"💼",title:"Office Worker Power Day",color:"#FFD166",tag:"Work",desc:"9-step morning for peak work performance",sections:[{label:"POWER MORNING",icon:"⚡",freq:"daily"}],tasks:[{time:"06:30",label:"Wake up early",freq:"daily"},{time:"06:35",label:"Drink water",freq:"daily"},{time:"06:40",label:"Brush teeth",freq:"daily"},{time:"06:50",label:"Healthy breakfast",freq:"daily"},{time:"07:10",label:"Take a shower",freq:"daily"},{time:"07:25",label:"Make bed",freq:"daily"},{time:"07:35",label:"Take vitamins",freq:"daily"},{time:"07:45",label:"Check weather",freq:"daily"},{time:"08:00",label:"Go to work",freq:"daily"}]},
+  { id:"rt5",emoji:"📚",title:"After School Routine",color:"#00D9FF",tag:"Study",desc:"Balance homework, chores & rest",sections:[{label:"AFTERNOON & EVENING",icon:"🌆",freq:"daily"}],tasks:[{time:"15:30",label:"Doing housework",freq:"daily"},{time:"16:00",label:"Doing homework",freq:"daily"},{time:"17:30",label:"Cook dinner",freq:"daily"},{time:"18:30",label:"Workout",freq:"daily"},{time:"19:30",label:"Reading",freq:"daily"},{time:"20:00",label:"Prep for tomorrow",freq:"daily"},{time:"21:00",label:"No screens",freq:"daily"},{time:"22:00",label:"Bed time",freq:"daily"}]},
+];
+
+const RoutinesTab = ({ userState }) => {
+  const isPro = userState.plan === PLANS.PRO;
+  const [view, setView] = useState("today");
+  const [myRoutines, setMyRoutines] = useState([
+    { id:"mr1",name:"Morning Routine",emoji:"☀️",color:T.gold,tasks:[{id:"t1",time:"06:30",label:"Wake up early",done:false},{id:"t2",time:"06:35",label:"Drink water",done:false},{id:"t3",time:"06:45",label:"Morning yoga",done:false},{id:"t4",time:"07:00",label:"Take a shower",done:false},{id:"t5",time:"07:20",label:"Healthy breakfast",done:false},{id:"t6",time:"07:40",label:"Journal / gratitude",done:false}]},
+    { id:"mr2",name:"Evening Routine",emoji:"🌙",color:T.purple,tasks:[{id:"t7",time:"20:00",label:"Tidy living space",done:false},{id:"t8",time:"20:30",label:"Prepare tomorrow's outfit",done:false},{id:"t9",time:"21:00",label:"No screens",done:false},{id:"t10",time:"21:30",label:"Read for 20 min",done:false},{id:"t11",time:"22:00",label:"Sleep",done:false}]},
+  ]);
+  const [sel, setSel] = useState(myRoutines[0]);
+  const [expanded, setExpanded] = useState(null);
+  const [cat, setCat] = useState("all");
+  const [added, setAdded] = useState(new Set());
+  const [bName, setBName] = useState(""); const [bEmoji, setBEmoji] = useState("⭐");
+  const [bColor, setBColor] = useState(T.pink); const [bTasks, setBTasks] = useState([{id:Date.now(),time:"08:00",label:""}]);
+  const [bSaved, setBSaved] = useState(false);
+
+  const toggleTask = (rId, tId) => {
+    const upd = myRoutines.map(r => r.id !== rId ? r : { ...r, tasks: r.tasks.map(t => t.id === tId ? { ...t, done: !t.done } : t) });
+    setMyRoutines(upd); const s = upd.find(r => r.id === rId); if (sel?.id === rId && s) setSel(s);
+  };
+
+  const addTemplate = (tmpl) => {
+    if (added.has(tmpl.id)) { setSel(myRoutines.find(r => r.id === "t_" + tmpl.id)); setView("today"); return; }
+    const nr = { id:"t_"+tmpl.id,name:tmpl.title,emoji:tmpl.emoji,color:tmpl.color,tasks:tmpl.tasks.map((t,i)=>({id:"tk"+i+tmpl.id,time:t.time,label:t.label,done:false})) };
+    const upd = [...myRoutines, nr]; setMyRoutines(upd); setAdded(s=>new Set([...s,tmpl.id])); setSel(nr); setView("today");
+  };
+
+  const saveRoutine = () => {
+    if (!bName.trim()) return;
+    const nr = {id:"b"+Date.now(),name:bName,emoji:bEmoji,color:bColor,tasks:bTasks.filter(t=>t.label.trim()).map(t=>({...t,done:false}))};
+    setMyRoutines(rs=>[...rs,nr]); setBSaved(true);
+    setTimeout(()=>{setBSaved(false);setBName("");setBTasks([{id:Date.now(),time:"08:00",label:""}]);setView("today");},1200);
+  };
+
+  const prog = sel ? Math.round(sel.tasks.filter(t=>t.done).length/sel.tasks.length*100) : 0;
+  const allDone = sel?.tasks.every(t=>t.done);
+  const cats = ["all","Morning","Cleaning","Work","Study","Family"];
+  const filtered = cat==="all" ? TEMPLATES : TEMPLATES.filter(t=>t.tag===cat);
+  const PALETTE = [T.pink,T.gold,T.green,T.purple,T.cyan,"#FF6B6B","#6c63ff","#F5853F"];
+  const subNav = [["today","📅","Today"],["myRoutines","⭐","Mine"],["templates","✨","Templates"],["builder","🔨","Builder"]];
+
+  return (
+    <div>
+      <div style={{display:"flex",gap:6,marginBottom:20}}>
+        {subNav.map(([v,ic,lb])=>(
+          <button key={v} onClick={()=>setView(v)} style={{flex:1,background:view===v?T.grad1:"rgba(255,255,255,0.05)",border:`1px solid ${view===v?"transparent":T.border}`,borderRadius:14,padding:"9px 2px",color:"#fff",fontFamily:"'DM Sans',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer",boxShadow:view===v?"0 4px 20px rgba(255,77,141,0.3)":"none",transition:"all 0.18s"}}>
+            <div style={{fontSize:14,marginBottom:2}}>{ic}</div>{lb}
+          </button>
+        ))}
+      </div>
+
+      {view==="today" && (
+        <div>
+          <div style={{display:"flex",gap:8,overflowX:"auto",marginBottom:16,paddingBottom:4}}>
+            {myRoutines.map(r=>(
+              <button key={r.id} onClick={()=>setSel(r)} style={{background:sel?.id===r.id?`${r.color}20`:"rgba(255,255,255,0.05)",border:`2px solid ${sel?.id===r.id?r.color:T.border}`,borderRadius:20,padding:"7px 14px",color:"#fff",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:700,fontSize:12,whiteSpace:"nowrap",flexShrink:0,transition:"all 0.18s"}}>{r.emoji} {r.name}</button>
+            ))}
+            <button onClick={()=>setView("templates")} style={{background:"rgba(255,255,255,0.03)",border:`2px dashed ${T.border}`,borderRadius:20,padding:"7px 14px",color:T.muted,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:700,fontSize:12,whiteSpace:"nowrap",flexShrink:0}}>＋ Add</button>
+          </div>
+          {sel ? (
+            <>
+              <div style={{background:allDone?`${T.green}0E`:`${sel.color}0A`,border:`1px solid ${allDone?T.green:sel.color}30`,borderRadius:20,padding:"18px",marginBottom:16,transition:"all 0.4s"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                  <div>
+                    <span style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:16}}>{sel.emoji} {sel.name}</span>
+                    <p style={{color:T.muted,fontSize:11,marginTop:3}}>{sel.tasks.filter(t=>t.done).length} of {sel.tasks.length} tasks</p>
+                  </div>
+                  <div style={{position:"relative",width:54,height:54}}>
+                    <svg viewBox="0 0 36 36" style={{width:54,height:54,transform:"rotate(-90deg)"}}>
+                      <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="3"/>
+                      <circle cx="18" cy="18" r="15.9" fill="none" stroke={allDone?T.green:sel.color} strokeWidth="3" strokeDasharray={`${prog} 100`} strokeLinecap="round" style={{transition:"stroke-dasharray 0.5s ease"}}/>
+                    </svg>
+                    <span style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",color:allDone?T.green:sel.color,fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:11}}>{allDone?"✓":`${prog}%`}</span>
+                  </div>
+                </div>
+                <div style={{height:4,background:"rgba(255,255,255,0.06)",borderRadius:2}}>
+                  <div style={{height:"100%",borderRadius:2,background:allDone?T.green:`linear-gradient(90deg,${T.green},${sel.color})`,width:`${prog}%`,transition:"width 0.6s ease"}}/>
+                </div>
+                {allDone&&<p style={{color:T.green,fontWeight:700,fontSize:13,marginTop:10,textAlign:"center"}}>🎉 Routine complete! Amazing work!</p>}
+              </div>
+              {sel.tasks.map((task,i)=>(
+                <div key={task.id} onClick={()=>toggleTask(sel.id,task.id)} style={{display:"flex",alignItems:"center",gap:14,padding:"13px 16px",background:task.done?`${T.green}0A`:T.card,border:`1px solid ${task.done?T.green:T.border}`,borderRadius:16,marginBottom:8,cursor:"pointer",transition:"all 0.22s",animation:`up 0.4s cubic-bezier(.22,.68,0,1.2) ${i*0.04}s both`}}>
+                  <div style={{width:28,height:28,borderRadius:"50%",border:`2px solid ${task.done?T.green:T.border}`,background:task.done?T.green:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all 0.25s"}}>
+                    {task.done&&<span style={{color:"#000",fontSize:12,fontWeight:900}}>✓</span>}
+                  </div>
+                  <span style={{flex:1,fontWeight:600,fontSize:14,textDecoration:task.done?"line-through":"none",color:task.done?T.muted:T.text,transition:"all 0.2s"}}>{task.label}</span>
+                  <span style={{color:task.done?T.green:T.muted,fontSize:12,fontWeight:600,background:"rgba(255,255,255,0.05)",borderRadius:8,padding:"2px 8px"}}>{task.time}</span>
+                </div>
+              ))}
+            </>
+          ) : (
+            <div style={{textAlign:"center",padding:"40px 0"}}>
+              <p style={{color:T.muted,fontSize:14,marginBottom:16}}>No routines yet — start with a template!</p>
+              <Btn onClick={()=>setView("templates")} small>Browse Templates</Btn>
+            </div>
+          )}
+        </div>
+      )}
+
+      {view==="myRoutines" && (
+        <div>
+          <p style={{color:T.muted,fontSize:12,marginBottom:16}}>Your saved routines.</p>
+          {myRoutines.map((r,i)=>{
+            const p=Math.round(r.tasks.filter(t=>t.done).length/r.tasks.length*100);
+            return (
+              <Card key={r.id} style={{marginBottom:12}}>
+                <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:12}}>
+                  <div style={{width:46,height:46,borderRadius:14,background:`${r.color}18`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{r.emoji}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:700,fontSize:15}}>{r.name}</div>
+                    <div style={{color:T.muted,fontSize:12}}>{r.tasks.length} tasks · {r.tasks.filter(t=>t.done).length} done</div>
+                  </div>
+                  <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:18,color:r.color}}>{p}%</div>
+                </div>
+                <div style={{height:4,background:T.faint,borderRadius:2,marginBottom:12}}>
+                  <div style={{height:"100%",borderRadius:2,background:p===100?T.green:r.color,width:`${p}%`,transition:"width 0.5s ease"}}/>
+                </div>
+                <div style={{display:"flex",gap:8}}>
+                  <button onClick={()=>{setSel(r);setView("today");}} style={{flex:1,background:r.color,border:"none",borderRadius:12,padding:"9px",color:"#fff",fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:700,cursor:"pointer"}}>📅 Use Today</button>
+                  <button onClick={()=>setMyRoutines(rs=>rs.filter(x=>x.id!==r.id))} style={{background:"rgba(255,107,107,0.1)",border:`1px solid ${T.coral}30`,borderRadius:12,padding:"9px 12px",color:T.coral,fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:700,cursor:"pointer"}}>Remove</button>
+                </div>
+              </Card>
+            );
+          })}
+          <button onClick={()=>setView("builder")} style={{width:"100%",background:"rgba(255,255,255,0.03)",border:`2px dashed ${T.border}`,borderRadius:18,padding:"14px",color:T.muted,fontFamily:"'DM Sans',sans-serif",fontWeight:700,fontSize:14,cursor:"pointer",marginTop:4}}>＋ Build New Routine</button>
+        </div>
+      )}
+
+      {view==="templates" && (
+        <div>
+          <div style={{display:"flex",gap:6,overflowX:"auto",marginBottom:18,paddingBottom:4}}>
+            {cats.map(f=>(<Pill key={f} label={f==="all"?"✨ All":f} active={cat===f} onClick={()=>setCat(f)} color={T.pink}/>))}
+          </div>
+          {filtered.map((tmpl,ti)=>(
+            <div key={tmpl.id} style={{background:T.card,border:`1px solid ${tmpl.color}25`,borderRadius:20,marginBottom:14,overflow:"hidden"}}>
+              <div onClick={()=>setExpanded(expanded===tmpl.id?null:tmpl.id)} style={{cursor:"pointer",padding:"16px"}}>
+                <div style={{display:"flex",alignItems:"center",gap:14}}>
+                  <div style={{width:50,height:50,borderRadius:14,background:`${tmpl.color}15`,border:`1px solid ${tmpl.color}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{tmpl.emoji}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:700,fontSize:14,marginBottom:5}}>{tmpl.title}</div>
+                    <div style={{display:"flex",gap:7}}><Tag label={tmpl.tag} color={tmpl.color}/><span style={{color:T.muted,fontSize:11}}>{tmpl.tasks.length} tasks</span></div>
+                  </div>
+                  <span style={{color:tmpl.color,fontSize:18}}>{expanded===tmpl.id?"▲":"▼"}</span>
+                </div>
+                <p style={{color:T.muted,fontSize:12,marginTop:10}}>{tmpl.desc}</p>
+              </div>
+              {expanded===tmpl.id&&(
+                <div style={{borderTop:`1px solid ${T.border}`}}>
+                  {tmpl.sections.map(sec=>{
+                    const tasks=tmpl.tasks.filter(t=>t.freq===sec.freq);
+                    return (<div key={sec.freq}><div style={{padding:"10px 16px 6px",display:"flex",gap:8,alignItems:"center"}}><span style={{fontSize:14}}>{sec.icon}</span><span style={{color:tmpl.color,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:1}}>{sec.label}</span></div>{tasks.map((task,j)=>(<div key={j} style={{display:"flex",gap:10,padding:"7px 16px",borderTop:`1px solid ${T.faint}`}}><div style={{width:5,height:5,borderRadius:"50%",background:tmpl.color,flexShrink:0,marginTop:6}}/><span style={{color:T.muted,fontSize:13,flex:1}}>{task.label}</span><span style={{color:T.muted,fontSize:11,fontWeight:600}}>{task.time}</span></div>))}</div>);
+                  })}
+                  <div style={{padding:"12px 16px"}}>
+                    <button onClick={()=>addTemplate(tmpl)} style={{width:"100%",background:added.has(tmpl.id)?`${T.green}12`:`${tmpl.color}15`,border:`1px solid ${added.has(tmpl.id)?T.green:tmpl.color}`,borderRadius:14,padding:"11px",color:added.has(tmpl.id)?T.green:tmpl.color,fontFamily:"'DM Sans',sans-serif",fontWeight:700,fontSize:14,cursor:"pointer"}}>
+                      {added.has(tmpl.id)?"✓ Added — View Today":"＋ Add to My Routines"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {view==="builder" && (
+        <div>
+          {!isPro && (
+            <Card glow={T.purple} style={{ background: `${T.purple}08`, marginBottom: 16 }}>
+              <p style={{ color: T.purple, fontWeight: 700, fontSize: 12, marginBottom: 4 }}>⚡ Pro Feature</p>
+              <p style={{ color: T.muted, fontSize: 12 }}>Full routine customization is available on the Pro plan. You can still build basic routines below.</p>
+            </Card>
+          )}
+          <p style={{color:T.muted,fontSize:12,marginBottom:18}}>Create your own routine with custom tasks and times.</p>
+          <div style={{display:"flex",gap:10,marginBottom:14}}>
+            <select value={bEmoji} onChange={e=>setBEmoji(e.target.value)} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:"11px 8px",color:T.text,fontSize:20,cursor:"pointer",width:62,flexShrink:0}}>
+              {["⭐","☀️","🌙","💪","🏠","💼","🧘","🎯","🌱","🔥","💫","🦋","📚","🏃","🍳"].map(e=><option key={e} value={e}>{e}</option>)}
+            </select>
+            <input value={bName} onChange={e=>setBName(e.target.value)} placeholder="Routine name…" style={{flex:1,background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:"11px 16px",color:T.text,fontSize:14}}/>
+          </div>
+          <p style={{color:T.muted,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>Color</p>
+          <div style={{display:"flex",gap:8,marginBottom:18}}>
+            {PALETTE.map(col=><button key={col} onClick={()=>setBColor(col)} style={{width:30,height:30,borderRadius:"50%",background:col,border:bColor===col?"3px solid #fff":"3px solid transparent",cursor:"pointer",flexShrink:0,outline:"none"}}/>)}
+          </div>
+          <p style={{color:T.muted,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>Tasks</p>
+          {bTasks.map((task,i)=>(
+            <div key={task.id} style={{display:"flex",gap:8,marginBottom:8,alignItems:"center"}}>
+              <input type="time" value={task.time} onChange={e=>setBTasks(ts=>ts.map(t=>t.id===task.id?{...t,time:e.target.value}:t))} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"10px 8px",color:T.text,fontSize:12,width:90,flexShrink:0}}/>
+              <input value={task.label} onChange={e=>setBTasks(ts=>ts.map(t=>t.id===task.id?{...t,label:e.target.value}:t))} placeholder={`Task ${i+1}`} style={{flex:1,background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"10px 12px",color:T.text,fontSize:13}}/>
+              <button onClick={()=>setBTasks(ts=>ts.filter(t=>t.id!==task.id))} style={{background:`${T.coral}12`,border:`1px solid ${T.coral}25`,borderRadius:10,padding:"8px 10px",color:T.coral,fontSize:14,flexShrink:0}}>✕</button>
+            </div>
+          ))}
+          <button onClick={()=>setBTasks(ts=>[...ts,{id:Date.now(),time:"09:00",label:""}])} style={{background:"rgba(255,255,255,0.03)",border:`1px dashed ${T.border}`,borderRadius:14,padding:"12px",color:T.muted,fontFamily:"'DM Sans',sans-serif",fontWeight:700,fontSize:13,cursor:"pointer",width:"100%",marginBottom:18}}>＋ Add Task</button>
+          <button onClick={saveRoutine} disabled={!bName.trim()||bSaved} style={{width:"100%",background:bSaved?T.green:`linear-gradient(135deg,${bColor},${bColor}bb)`,border:"none",borderRadius:16,padding:"14px",color:"#fff",fontFamily:"'DM Sans',sans-serif",fontWeight:700,fontSize:15,cursor:"pointer",transition:"all 0.2s"}}>
+            {bSaved?"✅ Saved!":"💾 Save My Routine"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const WorkoutsTab = () => {
+  const [active, setActive] = useState(null);
+  const WS = [
+    {emoji:"💪",title:"Full Body Burn",dur:"20 min",level:"Moderate",color:T.pink,steps:["10 squats","15 push-ups","20 lunges","30s plank","Rest 1 min","Repeat x3"]},
+    {emoji:"🧘",title:"Stretch & Flow",dur:"15 min",level:"Easy",color:T.cyan,steps:["Neck rolls","Shoulder stretch","Hip flexor stretch","Hamstring stretch","Spinal twist","Child's pose"]},
+    {emoji:"🏃",title:"Cardio Blast",dur:"30 min",level:"Intense",color:T.gold,steps:["5 min warm-up walk","1 min sprint","2 min walk","Repeat x8","5 min cool-down"]},
+    {emoji:"🍑",title:"Glute Sculpt",dur:"25 min",level:"Moderate",color:"#e04cb2",steps:["20 deadlifts","15 donkey kicks each side","20 glute bridges","15 lateral step-up squats","10 plie squats","Rest & repeat x2"]},
+  ];
+  if (active) return (
+    <div>
+      <button onClick={()=>setActive(null)} style={{background:T.faint,border:`1px solid ${T.border}`,borderRadius:12,padding:"8px 14px",color:T.text,fontSize:15,marginBottom:18}}>← Back</button>
+      <Card glow={active.color} style={{textAlign:"center",marginBottom:18,background:`${active.color}0A`}}>
+        <div style={{fontSize:52,marginBottom:10}}>{active.emoji}</div>
+        <h3 style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:20}}>{active.title}</h3>
+        <p style={{color:T.muted,fontSize:13}}>{active.dur} · {active.level}</p>
+      </Card>
+      {active.steps.map((s,i)=>(<div key={i} style={{display:"flex",gap:14,padding:"12px 16px",background:T.card,borderRadius:14,marginBottom:8,border:`1px solid ${T.border}`}}><span style={{color:active.color,fontWeight:800,fontSize:14,minWidth:22}}>{i+1}.</span><span style={{fontSize:14}}>{s}</span></div>))}
+    </div>
+  );
+  return (<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>{WS.map((w,i)=>(<div key={i} onClick={()=>setActive(w)} className="hover-lift" style={{background:`${w.color}0E`,border:`1px solid ${w.color}25`,borderRadius:18,padding:"18px 14px",cursor:"pointer"}}><div style={{fontSize:30,marginBottom:10}}>{w.emoji}</div><div style={{fontWeight:700,fontSize:13,marginBottom:4}}>{w.title}</div><div style={{color:T.muted,fontSize:11,marginBottom:10}}>{w.dur}</div><Tag label={w.level} color={w.color}/></div>))}</div>);
+};
+
+const MeditateTab = () => {
+  const [active, setActive] = useState(null);
+  const [timer, setTimer] = useState(null);
+  const [secs, setSecs] = useState(0);
+  const ref = useRef(null);
+  const startTimer = (mins) => { setTimer(mins * 60); setSecs(mins * 60); };
+  useEffect(() => {
+    if (timer === null) return;
+    if (timer === 0) { clearInterval(ref.current); return; }
+    ref.current = setInterval(() => setTimer(t => t - 1), 1000);
+    return () => clearInterval(ref.current);
+  }, [timer !== null]);
+  const MS = [
+    {emoji:"🌊",title:"Box Breathing",dur:"5 min",color:T.cyan,steps:["Inhale for 4 counts","Hold for 4 counts","Exhale for 4 counts","Hold for 4 counts","Repeat 5 times slowly"]},
+    {emoji:"🌿",title:"Body Scan",dur:"10 min",color:T.green,steps:["Lie down comfortably","Focus on feet — release tension","Move attention up to legs","Scan your torso and chest","Reach your head and face","Rest in stillness"]},
+    {emoji:"☀️",title:"Morning Intention",dur:"7 min",color:T.gold,steps:["Sit quietly, spine straight","Take 3 deep breaths","Set your intention for today","Visualize your day going well","Express gratitude for 3 things"]},
+    {emoji:"🌙",title:"Sleep Wind-Down",dur:"12 min",color:T.purple,steps:["Dim the lights","Breathe: 4-7-8 method","Release thoughts without judgment","Body scan from toes up","Drift into sleep"]},
+  ];
+  if (timer !== null) {
+    const m = Math.floor(timer / 60), s = timer % 60;
+    const pct = (1 - timer / secs) * 100;
+    return (<div style={{textAlign:"center",padding:"20px 0"}}><button onClick={()=>{setTimer(null);clearInterval(ref.current);}} style={{background:T.faint,border:`1px solid ${T.border}`,borderRadius:12,padding:"8px 14px",color:T.text,fontSize:15,marginBottom:24}}>← Stop</button><div style={{position:"relative",width:180,height:180,margin:"0 auto 24px"}}><svg viewBox="0 0 36 36" style={{width:180,height:180,transform:"rotate(-90deg)"}}><circle cx="18" cy="18" r="15.9" fill="none" stroke={T.faint} strokeWidth="2"/><circle cx="18" cy="18" r="15.9" fill="none" stroke={T.cyan} strokeWidth="2" strokeDasharray={`${pct} 100`} strokeLinecap="round" style={{transition:"stroke-dasharray 1s linear"}}/></svg><div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column"}}><div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:36,color:T.cyan}}>{m}:{s.toString().padStart(2,"0")}</div><div style={{color:T.muted,fontSize:12}}>remaining</div></div></div><p style={{color:T.muted,fontSize:14}}>Breathe deeply. You're doing great. 🌿</p>{timer===0&&<p style={{color:T.green,fontWeight:700,fontSize:16,marginTop:16}}>Session complete ✨</p>}</div>);
+  }
+  return (<div>{MS.map((m,i)=>(<div key={i} onClick={()=>setActive(active===i?null:i)} style={{background:active===i?`${m.color}0E`:T.card,border:`1px solid ${active===i?m.color:T.border}`,borderRadius:18,padding:"14px 16px",marginBottom:12,cursor:"pointer",transition:"all 0.22s"}}><div style={{display:"flex",alignItems:"center",gap:12}}><span style={{fontSize:28}}>{m.emoji}</span><div style={{flex:1}}><div style={{fontWeight:700,fontSize:15}}>{m.title}</div><div style={{color:T.muted,fontSize:12}}>{m.dur}</div></div><span style={{color:m.color,fontSize:18}}>{active===i?"▲":"▼"}</span></div>{active===i&&(<div style={{marginTop:14}}>{m.steps.map((step,j)=>(<div key={j} style={{display:"flex",gap:10,padding:"7px 0",borderTop:`1px solid ${T.faint}`}}><span style={{color:m.color,fontWeight:700,fontSize:12,minWidth:18}}>{j+1}.</span><span style={{color:T.muted,fontSize:13}}>{step}</span></div>))}<button onClick={e=>{e.stopPropagation();startTimer(parseInt(m.dur));}} style={{marginTop:14,background:`${m.color}18`,border:`1px solid ${m.color}40`,borderRadius:14,padding:"10px 20px",color:m.color,fontFamily:"'DM Sans',sans-serif",fontWeight:700,fontSize:13,cursor:"pointer",width:"100%"}}>▶ Start {m.dur} Timer</button></div>)}</div>))}</div>);
+};
+
+const Hub = ({ state, nav, userState }) => {
+  const [tab, setTab] = useState("routines");
+  const tabs = [
+    {id:"routines",label:"Routines",icon:"📋"},{id:"workout",label:"Workout",icon:"💪"},
+    {id:"meditate",label:"Meditate",icon:"🧘"},
+  ];
+  return (
+    <Shell>
+      <Bar />
+      <LoadBar load={state.load} />
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div style={{ padding: "12px 24px 0", flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+            <Back onClick={() => nav("home")} />
+            <h2 style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 19 }}>Mental Health Hub ✦</h2>
+          </div>
+          <div style={{ display: "flex", gap: 6, overflowX: "auto", marginBottom: 16, paddingBottom: 4 }}>
+            {tabs.map(t => (
+              <button key={t.id} onClick={() => setTab(t.id)} style={{ background: tab === t.id ? T.grad1 : "rgba(255,255,255,0.06)", border: `1px solid ${tab === t.id ? "transparent" : T.border}`, borderRadius: 20, padding: "7px 14px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'DM Sans',sans-serif", boxShadow: tab === t.id ? "0 4px 16px rgba(255,77,141,0.3)" : "none", flexShrink: 0, transition: "all 0.18s" }}>
+                {t.icon} {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={{ flex: 1, overflowY: "auto", padding: "0 24px 100px" }}>
+          {tab === "routines"  && <RoutinesTab userState={userState} />}
+          {tab === "workout"   && <WorkoutsTab />}
+          {tab === "meditate"  && <MeditateTab />}
+        </div>
+      </div>
+      <Nav screen="hub" nav={nav} />
+    </Shell>
+  );
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  ROOT APP
+// ══════════════════════════════════════════════════════════════════════════════
+export default function DecisionReset() {
+  const [state, dispatch] = useReducer(reduce, init);
+  const [screen, setScreen] = useState("welcome");
+  const [userState, setUserState] = useState(initUser);
+  const nav = useCallback((s) => setScreen(s), []);
+  const p = { state, dispatch, nav, userState, setUserState };
+
+  const SCREENS = {
+    welcome:  <Welcome  {...p} />,
+    home:     <Home     {...p} />,
+    checkin:  <CheckIn  {...p} />,
+    dump:     <Dump     {...p} />,
+    focus:    <Focus    {...p} />,
+    action:   <Action   {...p} />,
+    relief:   <Relief   {...p} />,
+    progress: <Progress {...p} />,
+    profile:  <Profile  {...p} />,
+    journal:  <Journal  {...p} />,
+    hub:      <Hub      {...p} />,
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", background: T.bg, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 24, gap: 18 }}>
+      <CSS />
+      <p style={{ color: "rgba(255,255,255,0.2)", fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase" }}>Decision Reset · AI Mental Wellness</p>
+      <div style={{ position: "relative" }}>
+        {SCREENS[screen] || SCREENS.welcome}
+        <Nav screen={screen} nav={nav} />
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center", maxWidth: 480 }}>
+        {Object.keys(SCREENS).map(s => (
+          <button key={s} onClick={() => nav(s)} style={{ background: screen === s ? T.grad1 : "rgba(255,255,255,0.07)", border: "none", borderRadius: 8, padding: "5px 11px", color: "#fff", fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", letterSpacing: 0.3, boxShadow: screen === s ? "0 2px 12px rgba(255,77,141,0.35)" : "none", transition: "all 0.15s" }}>
+            {s}
+          </button>
+        ))}
+      </div>
+      <p style={{ color: "rgba(255,255,255,0.15)", fontSize: 10 }}>↑ Jump to any screen</p>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(DecisionReset));
+  </script>
 </body>
 </html>
