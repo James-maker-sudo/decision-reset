@@ -108,8 +108,8 @@ function reduce(s, a) {
 // ── AI helper ─────────────────────────────────────────────────────────────────
 // ── Config — replace with your real values ────────────────────────────────────
 const CONFIG = {
-  SUPABASE_URL:      "YOUR_SUPABASE_URL",           // e.g. https://xxxx.supabase.co
-  SUPABASE_ANON_KEY: "YOUR_SUPABASE_ANON_KEY",      // public anon key from Supabase
+  SUPABASE_URL:      "https://nswxjbvksetmmdjojjsp.supabase.co",           // e.g. https://xxxx.supabase.co
+  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zd3hqYnZrc2V0bW1kam9qanNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4MTEyMDQsImV4cCI6MjA4ODM4NzIwNH0.kicIE3CAbcI68brh5UU3S1dR8qNFMyeFMoRpU8VY1OA",      // public anon key from Supabase
   API_URL:           "/api/claude",                  // Vercel serverless proxy
   CHECKOUT_URL:      "/api/create-checkout",         // Vercel checkout endpoint
 };
