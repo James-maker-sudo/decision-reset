@@ -11,7 +11,7 @@
 <body>
   <div id="root"></div>
   <script type="text/babel">
-const { useState, useReducer, useEffect, useCallback, useRef } = React;
+
 const _font = document.createElement("link");
 _font.href = "https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap";
 _font.rel = "stylesheet";
@@ -121,7 +121,7 @@ function reduce(s, a) {
 // ── Config — replace with your real values ────────────────────────────────────
 const CONFIG = {
   SUPABASE_URL:      "https://nswxjbvksetmmdjojjsp.supabase.co",           // e.g. https://xxxx.supabase.co
-  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zd3hqYnZrc2V0bW1kam9qanNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4MTEyMDQsImV4cCI6MjA4ODM4NzIwNH0.kicIE3CAbcI68brh5UU3S1dR8qNFMyeFMoRpU8VY1OA",      // public anon key from Supabase
+  SUPABASE_ANON_KEY: "YOUR_SUPABASE_ANON_KEY",      // public anon key from Supabase
   API_URL:           "/api/claude",                  // Vercel serverless proxy
   CHECKOUT_URL:      "/api/create-checkout",         // Vercel checkout endpoint
 };
@@ -394,7 +394,7 @@ const Paywall = ({ type, onClose, onUpgrade, onCreateAccount }) => {
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
           <span style={{ fontSize: 20 }}>⚡</span>
           <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 16, color: T.purple }}>Decision Reset Pro</span>
-          <span style={{ marginLeft: "auto", fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 18, color: T.gold }}>$7.99/mo</span>
+          <span style={{ marginLeft: "auto", fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 18, color: T.gold }}>$9.99/mo</span>
         </div>
         {["Unlimited decision resets", "Advanced AI step breakdown", "Long-term pattern analysis", "Full routine customization", "Unlimited journal prompts", "Meditation personalization", "Full history access"].map((f, i) => (
           <div key={i} style={{ display: "flex", gap: 10, alignItems: "center", padding: "5px 0", borderTop: i > 0 ? `1px solid ${T.faint}` : "none" }}>
@@ -956,10 +956,12 @@ const Dump = ({ state, dispatch, nav, userState, setUserState }) => {
     try {
       await DB.startCheckout(userState.supabaseId, userState.email, plan);
     } catch (e) {
-      // Stripe not connected yet — simulate for testing
-      setUserState(u => ({ ...u, plan: PLANS.PRO, resetsLimit: 999 }));
+      alert("Payment unavailable right now. Please try again later.");
       setShowUpgradeModal(false);
-      setShowPaywall(false);
+
+
+
+
     }
     setCheckoutLoading(false);
   };
@@ -1534,8 +1536,8 @@ const Profile = ({ state, dispatch, nav, userState, setUserState }) => {
     setCheckoutLoading(true);
     try {
       await DB.startCheckout(userState.supabaseId, userState.email, plan);
-    } catch (e) {
-      setUserState(u => ({ ...u, plan: PLANS.PRO, resetsLimit: 999 }));
+      alert("Payment unavailable right now. Please try again later.");
+      setShowUpgradeModal(false);
       setShowUpgradeModal(false);
     }
     setCheckoutLoading(false);
@@ -1715,7 +1717,7 @@ const Profile = ({ state, dispatch, nav, userState, setUserState }) => {
             {!isPro && (
               <>
                 <Card glow={T.purple} style={{ background: `${T.purple}08`, marginBottom: 16 }}>
-                  <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 16, color: T.purple, marginBottom: 12 }}>⚡ Pro Plan — $7.99/mo</div>
+                  <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 16, color: T.purple, marginBottom: 12 }}>⚡ Pro Plan — $9.99/mo</div>
                   {["Unlimited decision resets", "Advanced AI step breakdown", "Long-term pattern analysis", "Full routine customization", "Unlimited journal prompts", "Meditation personalization", "Full history access"].map((f, i) => (
                     <div key={i} style={{ display: "flex", gap: 10, padding: "6px 0", borderTop: i > 0 ? `1px solid ${T.faint}` : "none" }}>
                       <span style={{ color: T.green }}>✓</span>
@@ -2142,7 +2144,6 @@ function DecisionReset() {
         {SCREENS[screen] || SCREENS.welcome}
         <Nav screen={screen} nav={nav} />
       </div>
-     
     </div>
   );
 }
@@ -2152,5 +2153,3 @@ root.render(React.createElement(DecisionReset));
   </script>
 </body>
 </html>
-
-
