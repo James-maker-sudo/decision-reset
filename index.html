@@ -2142,14 +2142,7 @@ function DecisionReset() {
         {SCREENS[screen] || SCREENS.welcome}
         <Nav screen={screen} nav={nav} />
       </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center", maxWidth: 480 }}>
-        {Object.keys(SCREENS).map(s => (
-          <button key={s} onClick={() => nav(s)} style={{ background: screen === s ? T.grad1 : "rgba(255,255,255,0.07)", border: "none", borderRadius: 8, padding: "5px 11px", color: "#fff", fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", letterSpacing: 0.3, boxShadow: screen === s ? "0 2px 12px rgba(255,77,141,0.35)" : "none", transition: "all 0.15s" }}>
-            {s}
-          </button>
-        ))}
-      </div>
-      <p style={{ color: "rgba(255,255,255,0.15)", fontSize: 10 }}>↑ Jump to any screen</p>
+     
     </div>
   );
 }
@@ -2159,4 +2152,5 @@ root.render(React.createElement(DecisionReset));
   </script>
 </body>
 </html>
+
 
