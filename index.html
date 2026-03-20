@@ -1536,8 +1536,8 @@ const Profile = ({ state, dispatch, nav, userState, setUserState }) => {
     setCheckoutLoading(true);
     try {
       await DB.startCheckout(userState.supabaseId, userState.email, plan);
+    } catch (e) {
       alert("Payment unavailable right now. Please try again later.");
-      setShowUpgradeModal(false);
       setShowUpgradeModal(false);
     }
     setCheckoutLoading(false);
